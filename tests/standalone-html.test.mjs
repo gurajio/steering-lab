@@ -16,23 +16,25 @@ test("standalone HTML has no runtime dependencies and valid script syntax", asyn
   assert.doesNotThrow(() => new Function(html.slice(start, end)));
 });
 
-test("standalone HTML calculates physical A and W and supports fullscreen cancellation", async () => {
+test("standalone HTML calculates physical A and W and supports fullscreen reset", async () => {
   const html = await readFile(htmlUrl, "utf8");
   assert.match(html, /const mmPerPx = 25\.4 \/ ppi/);
   assert.match(html, /amplitudeMm: config\.amplitude \* mmPerPx/);
   assert.match(html, /widthMm: config\.width \* mmPerPx/);
   assert.match(html, /requestFullscreen/);
   assert.match(html, /exitFullscreen/);
-  assert.match(html, /試行を終了/);
+  assert.match(html, /試行をリセット/);
 });
 
 test("standalone task preserves the attached experiment geometry and interaction rules", async () => {
   const html = await readFile(htmlUrl, "utf8");
-  assert.match(html, /movementAreaPx:\s*200/);
+  assert.match(html, /startBufferPx:\s*200/);
+  assert.match(html, /endBufferPx:\s*200/);
   assert.match(html, /marginPx:\s*88/);
   assert.match(html, /minCorridorWidthPx:\s*8/);
-  assert.match(html, /startAreaEndAlong:\s*-movementAreaLength/);
-  assert.match(html, /endAreaStartAlong:\s*displayLength \+ movementAreaLength/);
+  assert.match(html, /startAreaEndAlong:\s*-startBufferLength/);
+  assert.match(html, /endAreaStartAlong:\s*displayLength \+ endBufferLength/);
+  assert.match(html, /config\.amplitude \+ config\.startBufferPx \+ config\.endBufferPx/);
   assert.match(html, /isInsideEndpointZone\(point, taskGeometry, "start"\)/);
   assert.match(html, /isInsideEndpointZone\(point, trial\.path, "end"\)/);
   assert.match(html, /getCorridorDeviation\(point, trial\.path\)/);
@@ -48,6 +50,8 @@ test("fullscreen task includes editable A, W, angle and display parameters", asy
     "runAmplitude",
     "runWidthInput",
     "runAngle",
+    "runStartBuffer",
+    "runEndBuffer",
     "runDiagonal",
     "runScreenWidth",
     "runScreenHeight"
@@ -59,4 +63,17 @@ test("fullscreen task includes editable A, W, angle and display parameters", asy
   assert.match(html, /transform:\s*translateX\(-292px\)/);
   assert.match(html, /id="taskParameterHandle"/);
   assert.match(html, /\.task-stage\s*\{[\s\S]*?position:\s*absolute/);
+});
+
+test("standalone task matches the React task-surface state and saved config schema", async () => {
+  const html = await readFile(htmlUrl, "utf8");
+  assert.match(html, /const STORAGE_KEY = "straight-steering-studio-config-v2"/);
+  assert.match(html, /amplitudePx:\s*config\.amplitude/);
+  assert.match(html, /widthPx:\s*config\.width/);
+  assert.match(html, /<section id="taskOverlay" class="task-overlay" aria-label=/);
+  assert.doesNotMatch(html, /<section id="taskOverlay"[^>]*\shidden(?:\s|>)/);
+  assert.match(html, /if \(success \|\| progress >= displaySettings\.nearGoalProgressThreshold\)/);
+  assert.match(html, /success \? "success" : "nearGoal"/);
+  assert.match(html, /startBufferPx:\s*config\.startBufferPx/);
+  assert.match(html, /endBufferPx:\s*config\.endBufferPx/);
 });

@@ -904,6 +904,183 @@
         .preview { min-height: 560px; }
         .preview-footer { align-items: flex-start; flex-direction: column; }
       }
+
+      /* Keep the standalone task surface in sync with the React implementation. */
+      .task-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        color: var(--ink);
+        background: #d8dce3;
+        overflow: hidden;
+      }
+
+      .task-overlay[hidden] { display: none; }
+
+      .task-overlay .task-toolbar {
+        position: absolute;
+        z-index: 8;
+        top: 0;
+        right: 18px;
+        width: min(940px, calc(100% - 36px));
+        min-height: 58px;
+        padding: 10px 17px 10px 21px;
+        border: 1px solid #cbd3df;
+        border-top: 0;
+        border-radius: 0 0 7px 7px;
+        transform: translateY(calc(-100% + 8px));
+        transition: transform 180ms ease-out;
+        filter: drop-shadow(0 10px 18px rgba(23, 32, 51, .14));
+      }
+
+      .task-overlay .task-toolbar::after {
+        content: "操作";
+        position: absolute;
+        top: 100%;
+        right: 14px;
+        min-width: 54px;
+        padding: 6px 10px;
+        border-radius: 0 0 6px 6px;
+        color: #fff;
+        background: var(--primary);
+        text-align: center;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .08em;
+      }
+
+      .task-overlay .task-toolbar:hover,
+      .task-overlay .task-toolbar:focus-within { transform: translateY(0); }
+
+      .task-overlay .task-workspace { position: absolute; inset: 0; }
+      .task-overlay .task-stage { inset: 0; padding: 0; background: #d8dce3; }
+      .task-overlay .task-stage canvas { border: 0; border-radius: 0; }
+
+      .task-overlay .task-parameter-dock {
+        top: 12px;
+        bottom: 12px;
+      }
+
+      .task-overlay .task-parameter-dock.is-dismissed,
+      .task-overlay .task-parameter-dock.is-dismissed:hover,
+      .task-overlay .task-parameter-dock.is-dismissed:focus-within {
+        transform: translateX(-292px);
+      }
+
+      .task-parameters-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 5px;
+      }
+
+      .task-parameters-head h2 { margin: 0; }
+
+      .task-parameters-head button {
+        min-height: 28px;
+        padding: 0 10px;
+        border: 1px solid #c3ccda;
+        border-radius: 5px;
+        color: #4c5a70;
+        background: #fff;
+        cursor: pointer;
+        font-size: 9px;
+        font-weight: 750;
+      }
+
+      .parameter-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3px;
+        margin-bottom: 12px;
+        padding: 3px;
+        border-radius: 6px;
+        background: #eef2f8;
+      }
+
+      .parameter-tab {
+        min-height: 32px;
+        padding: 0 5px;
+        border: 0;
+        border-radius: 4px;
+        color: var(--muted);
+        background: transparent;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 750;
+      }
+
+      .parameter-tab.active { color: var(--primary); background: #fff; box-shadow: 0 1px 3px rgba(23, 32, 51, .12); }
+      .parameter-tab-panel { min-height: 264px; }
+      .parameter-tab-panel[hidden] { display: none; }
+
+      .buffer-note {
+        margin: 0;
+        padding: 9px;
+        border-left: 3px solid var(--primary);
+        color: #4d5f78;
+        background: #eef5ff;
+        font-size: 9px;
+        line-height: 1.65;
+      }
+
+      .buffer-summary {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr 1fr;
+        margin-bottom: 9px;
+        border: 1px solid #b8c1d1;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      .buffer-summary > div { padding: 9px 5px; border-right: 1px solid #b8c1d1; background: #e8f7ee; text-align: center; }
+      .buffer-summary > div:last-child { border-right: 0; background: #fff2e3; }
+      .buffer-summary > .is-core { background: #eaf1ff; }
+      .buffer-summary span, .buffer-summary small { display: block; color: var(--muted); font: 700 7px/1.25 monospace; }
+      .buffer-summary b { display: block; margin: 5px 0 4px; font: 750 12px/1 monospace; }
+
+      .route-total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 11px;
+        border-radius: 5px;
+        color: #21436f;
+        background: #eef5ff;
+        font-size: 10px;
+      }
+
+      .task-overlay .task-parameter-handle { margin-top: clamp(124px, 22vh, 190px); }
+
+      .task-overlay .task-message {
+        position: absolute;
+        z-index: 6;
+        right: 50%;
+        bottom: 12px;
+        width: min(760px, calc(100% - 48px));
+        min-height: 42px;
+        border: 1px solid #cbd3df;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, .94);
+        transform: translateX(50%);
+        filter: drop-shadow(0 8px 16px rgba(23, 32, 51, .12));
+        pointer-events: none;
+      }
+
+      .task-message.nearGoal,
+      .task-message.retry,
+      .task-message.badStart,
+      .task-message.cancelled { color: #a83d30; }
+
+      @media (max-width: 680px) {
+        .task-overlay .task-toolbar { right: 8px; width: calc(100% - 16px); }
+        .task-overlay .task-parameter-dock.is-dismissed,
+        .task-overlay .task-parameter-dock.is-dismissed:hover,
+        .task-overlay .task-parameter-dock.is-dismissed:focus-within { transform: translateX(-250px); }
+        .task-overlay .task-message { bottom: 8px; width: calc(100% - 24px); min-height: 52px; flex-direction: column; gap: 4px; }
+      }
     </style>
   </head>
   <body>
@@ -1052,27 +1229,43 @@
       </footer>
     </main>
 
-    <section id="taskOverlay" class="task-overlay" hidden aria-label="全画面ステアリング課題">
+    <section id="taskOverlay" class="task-overlay" aria-label="全画面ステアリング課題">
       <div class="task-toolbar">
         <div class="readout">
           <span>STRAIGHT TASK</span>
           <b id="runA">A 1050px</b>
           <b id="runW">W 30px</b>
           <b id="runId">ID 35</b>
+          <b id="runBuffer">BUFFER 200 / 200px</b>
           <b id="runMm">— mm</b>
         </div>
         <div class="task-buttons">
-          <button id="returnFullscreen" type="button" hidden>全画面に戻す</button>
-          <button id="exitFullscreen" type="button">全画面解除</button>
-          <button id="stopTask" class="stop" type="button">試行を終了</button>
+          <button id="returnFullscreen" type="button">ブラウザ全画面</button>
+          <button id="exitFullscreen" type="button" disabled>全画面解除</button>
+          <button id="stopTask" class="stop" type="button">試行をリセット</button>
         </div>
       </div>
       <div class="task-workspace">
         <div id="taskParameterDock" class="task-parameter-dock">
         <aside id="taskParameters" class="task-parameters" aria-label="全画面課題のパラメータ設定">
-          <h2>パラメータ設定</h2>
-          <p>試行画面を閉じずに変更できます。変更時は進行中の試行だけをキャンセルします。</p>
-          <div class="control-card">
+          <div class="task-parameters-head">
+            <h2>パラメータ設定</h2>
+            <button id="closeTaskParameters" type="button" aria-label="パラメータ設定を閉じる">閉じる</button>
+          </div>
+          <p>カーソルを外すと閉じます。変更時は進行中の試行だけをキャンセルします。</p>
+          <div class="parameter-tabs" role="tablist" aria-label="パラメータの種類">
+            <button class="parameter-tab active" type="button" role="tab" aria-selected="true" data-parameter-tab="task">課題</button>
+            <button class="parameter-tab" type="button" role="tab" aria-selected="false" data-parameter-tab="buffer">バッファ</button>
+            <button class="parameter-tab" type="button" role="tab" aria-selected="false" data-parameter-tab="screen">画面</button>
+          </div>
+          <div class="parameter-tab-panel" data-parameter-panel="task">
+            <div class="preset-row" aria-label="既存条件プリセット">
+              <button class="preset run-preset" type="button" data-a="1050" data-w="30" title="A固定・W広い">C1</button>
+              <button class="preset run-preset" type="button" data-a="1050" data-w="21" title="A固定・W狭い">C2</button>
+              <button class="preset run-preset" type="button" data-a="1250" data-w="25" title="W固定・A長い">C3</button>
+              <button class="preset run-preset" type="button" data-a="875" data-w="25" title="W固定・A短い">C4</button>
+            </div>
+            <div class="control-card">
             <h3>直線課題</h3>
             <div class="field-grid">
               <label class="field" for="runAmplitude">A · 移動距離
@@ -1086,9 +1279,29 @@
               <span><b>直線の角度</b><output id="runAngleValue">30°</output></span>
               <input id="runAngle" type="range" min="0" max="180" step="1" value="30" />
             </label>
+            </div>
           </div>
-          <div class="control-card">
-            <h3>画面設定</h3>
+          <div class="parameter-tab-panel" data-parameter-panel="buffer" hidden>
+            <div class="control-card">
+              <h3>Core MTに含めない区間</h3>
+              <label class="field full" for="runStartBuffer">START側バッファ
+                <span class="input-wrap"><input id="runStartBuffer" type="number" min="0" max="2000" step="1" value="200" /><b>px</b></span>
+              </label>
+              <label class="field full" for="runEndBuffer">END側バッファ
+                <span class="input-wrap"><input id="runEndBuffer" type="number" min="0" max="2000" step="1" value="200" /><b>px</b></span>
+              </label>
+              <p class="buffer-note">Core MTは青いコア区間Aだけで算出します。START側とEND側のバッファは全体MTには含まれますが、Core MTには含まれません。</p>
+            </div>
+            <div class="buffer-summary" aria-label="経路区間の内訳">
+              <div><span>START BUFFER</span><b><output id="runStartBufferSummary">200</output>px</b><small><output id="runStartBufferMm">—</output> mm</small></div>
+              <div class="is-core"><span>CORE A</span><b><output id="runCoreSummary">1050</output>px</b><small>Core MT対象</small></div>
+              <div><span>END BUFFER</span><b><output id="runEndBufferSummary">200</output>px</b><small><output id="runEndBufferMm">—</output> mm</small></div>
+            </div>
+            <div class="route-total"><span>経路合計</span><b><output id="runRouteTotal">1450</output> px</b></div>
+          </div>
+          <div class="parameter-tab-panel" data-parameter-panel="screen" hidden>
+            <div class="control-card">
+              <h3>画面設定</h3>
             <label class="field full" for="runDiagonal">対角サイズ
               <span class="input-wrap"><input id="runDiagonal" type="number" min="5" max="100" step="0.1" value="24" /><b>inch</b></span>
             </label>
@@ -1099,6 +1312,7 @@
               <label class="field" for="runScreenHeight">画面の縦
                 <span class="input-wrap"><input id="runScreenHeight" type="number" min="240" max="10000" step="1" value="1080" /><b>px</b></span>
               </label>
+            </div>
             </div>
           </div>
           <div class="run-actuals" aria-label="現在の実寸値">
@@ -1113,7 +1327,7 @@
         <div class="task-stage"><canvas id="taskCanvas" aria-label="直線ステアリング課題"></canvas></div>
       </div>
       <div id="taskMessage" class="task-message" role="status" aria-live="polite">
-        STARTを押したまま、ENDまで移動してください
+        START領域内で押して、END領域内でポインタを離してください。
       </div>
     </section>
 
@@ -1121,18 +1335,20 @@
       (() => {
         "use strict";
 
-        const STORAGE_KEY = "steering-task-configurator-html-v1";
+        const STORAGE_KEY = "straight-steering-studio-config-v2";
+        const LEGACY_STORAGE_KEY = "steering-task-configurator-html-v1";
         const defaults = {
           amplitude: 1050,
           width: 30,
           angle: 30,
+          startBufferPx: 200,
+          endBufferPx: 200,
           diagonal: 24,
           screenWidth: 1920,
           screenHeight: 1080
         };
         const displaySettings = Object.freeze({
           marginPx: 88,
-          movementAreaPx: 200,
           minCorridorWidthPx: 8,
           deviationThresholdPx: 24,
           nearGoalProgressThreshold: 0.9
@@ -1153,10 +1369,12 @@
             "formulaValue", "angleValue", "screenWidthMm", "screenHeightMm", "screenDiagonalMm",
             "actualA", "actualW", "actualAngle", "previewAMm", "previewWMm", "measureId",
             "fitBadge", "fitWarning", "detectScreen", "startTask", "topFullscreen", "appShell",
-            "exportConfig", "previewCanvas", "taskOverlay", "taskCanvas", "runA", "runW", "runId", "runMm",
+            "exportConfig", "previewCanvas", "taskOverlay", "taskCanvas", "runA", "runW", "runId", "runBuffer", "runMm",
             "returnFullscreen", "exitFullscreen", "stopTask", "taskMessage",
-            "taskParameterDock", "taskParameterHandle",
-            ...Object.keys(runInputMap), "runAngleValue", "runActualA", "runActualW", "runActualId", "runMmPerPx"
+            "taskParameterDock", "taskParameterHandle", "closeTaskParameters",
+            ...Object.keys(runInputMap), "runStartBuffer", "runEndBuffer", "runAngleValue",
+            "runStartBufferSummary", "runStartBufferMm", "runCoreSummary", "runEndBufferSummary",
+            "runEndBufferMm", "runRouteTotal", "runActualA", "runActualW", "runActualId", "runMmPerPx"
           ].map((id) => [id, document.getElementById(id)])
         );
 
@@ -1169,6 +1387,10 @@
         elements.appShell.append(elements.taskOverlay);
 
         const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+        const numberOr = (value, fallback) => {
+          const parsed = Number(value);
+          return String(value).trim() !== "" && Number.isFinite(parsed) ? parsed : fallback;
+        };
         const round = (value, digits = 2) => {
           const factor = 10 ** digits;
           return Math.round(value * factor) / factor;
@@ -1176,8 +1398,21 @@
 
         function loadConfig() {
           try {
-            const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-            if (stored) config = { ...defaults, ...stored };
+            const stored = JSON.parse(
+              localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY) || "null"
+            );
+            if (stored) {
+              config = {
+                amplitude: stored.amplitudePx ?? stored.amplitude ?? defaults.amplitude,
+                width: stored.widthPx ?? stored.width ?? defaults.width,
+                angle: stored.angleDeg ?? stored.angle ?? defaults.angle,
+                startBufferPx: stored.startBufferPx ?? defaults.startBufferPx,
+                endBufferPx: stored.endBufferPx ?? defaults.endBufferPx,
+                diagonal: stored.screenDiagonalIn ?? stored.diagonal ?? defaults.diagonal,
+                screenWidth: stored.screenWidthPx ?? stored.screenWidth ?? defaults.screenWidth,
+                screenHeight: stored.screenHeightPx ?? stored.screenHeight ?? defaults.screenHeight
+              };
+            }
             else if (window.screen.width && window.screen.height) {
               config.screenWidth = window.screen.width;
               config.screenHeight = window.screen.height;
@@ -1191,15 +1426,28 @@
 
         function readConfig() {
           config = {
-            amplitude: clamp(Number(elements.amplitude.value) || defaults.amplitude, 40, 4000),
-            width: clamp(Number(elements.width.value) || defaults.width, 8, 600),
-            angle: clamp(Number(elements.angle.value) || 0, 0, 180),
-            diagonal: clamp(Number(elements.diagonal.value) || defaults.diagonal, 5, 100),
-            screenWidth: clamp(Number(elements.screenWidth.value) || defaults.screenWidth, 320, 10000),
-            screenHeight: clamp(Number(elements.screenHeight.value) || defaults.screenHeight, 240, 10000)
+            amplitude: clamp(numberOr(elements.amplitude.value, defaults.amplitude), 40, 4000),
+            width: clamp(numberOr(elements.width.value, defaults.width), 8, 600),
+            angle: clamp(numberOr(elements.angle.value, 0), 0, 180),
+            startBufferPx: clamp(numberOr(elements.runStartBuffer.value, config.startBufferPx), 0, 2000),
+            endBufferPx: clamp(numberOr(elements.runEndBuffer.value, config.endBufferPx), 0, 2000),
+            diagonal: clamp(numberOr(elements.diagonal.value, defaults.diagonal), 5, 100),
+            screenWidth: clamp(numberOr(elements.screenWidth.value, defaults.screenWidth), 320, 10000),
+            screenHeight: clamp(numberOr(elements.screenHeight.value, defaults.screenHeight), 240, 10000)
           };
           ids.forEach((id) => { elements[id].value = config[id]; });
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); } catch (_) {}
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+              amplitudePx: config.amplitude,
+              widthPx: config.width,
+              angleDeg: config.angle,
+              startBufferPx: config.startBufferPx,
+              endBufferPx: config.endBufferPx,
+              screenDiagonalIn: config.diagonal,
+              screenWidthPx: config.screenWidth,
+              screenHeightPx: config.screenHeight
+            }));
+          } catch (_) {}
         }
 
         function calculateMetrics() {
@@ -1208,7 +1456,7 @@
           const mmPerPx = 25.4 / ppi;
           const id = config.amplitude / config.width;
           const radians = config.angle * Math.PI / 180;
-          const totalLength = config.amplitude + displaySettings.movementAreaPx * 2;
+          const totalLength = config.amplitude + config.startBufferPx + config.endBufferPx;
           const projectedWidth = Math.abs(Math.cos(radians)) * totalLength + Math.abs(Math.sin(radians)) * config.width;
           const projectedHeight = Math.abs(Math.sin(radians)) * totalLength + Math.abs(Math.cos(radians)) * config.width;
           const requiredWidth = Math.ceil(projectedWidth + displaySettings.marginPx * 2);
@@ -1219,6 +1467,9 @@
             id,
             amplitudeMm: config.amplitude * mmPerPx,
             widthMm: config.width * mmPerPx,
+            startBufferMm: config.startBufferPx * mmPerPx,
+            endBufferMm: config.endBufferPx * mmPerPx,
+            totalRoutePx: totalLength,
             screenWidthMm: config.screenWidth * mmPerPx,
             screenHeightMm: config.screenHeight * mmPerPx,
             screenDiagonalMm: config.diagonal * 25.4,
@@ -1250,11 +1501,20 @@
           elements.runA.textContent = `A ${config.amplitude}px`;
           elements.runW.textContent = `W ${config.width}px`;
           elements.runId.textContent = `ID ${round(metrics.id, 3)}`;
+          elements.runBuffer.textContent = `BUFFER ${config.startBufferPx} / ${config.endBufferPx}px`;
           elements.runMm.textContent = `${round(metrics.amplitudeMm, 1)} × ${round(metrics.widthMm, 1)} mm`;
           Object.entries(runInputMap).forEach(([runId, mainId]) => {
             if (document.activeElement !== elements[runId]) elements[runId].value = config[mainId];
           });
+          if (document.activeElement !== elements.runStartBuffer) elements.runStartBuffer.value = config.startBufferPx;
+          if (document.activeElement !== elements.runEndBuffer) elements.runEndBuffer.value = config.endBufferPx;
           elements.runAngleValue.textContent = `${config.angle}°`;
+          elements.runStartBufferSummary.textContent = config.startBufferPx;
+          elements.runStartBufferMm.textContent = round(metrics.startBufferMm, 2);
+          elements.runCoreSummary.textContent = config.amplitude;
+          elements.runEndBufferSummary.textContent = config.endBufferPx;
+          elements.runEndBufferMm.textContent = round(metrics.endBufferMm, 2);
+          elements.runRouteTotal.textContent = metrics.totalRoutePx;
           elements.runActualA.textContent = round(metrics.amplitudeMm, 2);
           elements.runActualW.textContent = round(metrics.widthMm, 2);
           elements.runActualId.textContent = round(metrics.id, 3);
@@ -1282,7 +1542,7 @@
 
         function preferredCanvasSize(canvas) {
           const angle = config.angle * Math.PI / 180;
-          const totalLength = config.amplitude + displaySettings.movementAreaPx * 2;
+          const totalLength = config.amplitude + config.startBufferPx + config.endBufferPx;
           const requiredWidth = Math.ceil(Math.abs(Math.cos(angle) * totalLength) + displaySettings.marginPx * 2);
           const requiredHeight = Math.ceil(Math.abs(Math.sin(angle) * totalLength) + displaySettings.marginPx * 2);
           const shell = canvas.parentElement;
@@ -1322,7 +1582,7 @@
           const size = resizeCanvas(canvas, exactPixels);
           const angle = config.angle * Math.PI / 180;
           const direction = { x: Math.cos(angle), y: -Math.sin(angle) };
-          const totalLength = config.amplitude + displaySettings.movementAreaPx * 2;
+          const totalLength = config.amplitude + config.startBufferPx + config.endBufferPx;
           const projectedWidth = Math.abs(direction.x) * totalLength + Math.abs(direction.y) * config.width;
           const projectedHeight = Math.abs(direction.y) * totalLength + Math.abs(direction.x) * config.width;
           const scale = exactPixels ? 1 : clamp(Math.min(
@@ -1332,9 +1592,10 @@
           ), 0.05, 1);
           const displayLength = config.amplitude * scale;
           const displayWidth = Math.max(config.width * scale, displaySettings.minCorridorWidthPx);
-          const movementAreaLength = displaySettings.movementAreaPx * scale;
-          const visibleStartAlong = -movementAreaLength;
-          const visibleEndAlong = displayLength + movementAreaLength;
+          const startBufferLength = config.startBufferPx * scale;
+          const endBufferLength = config.endBufferPx * scale;
+          const visibleStartAlong = -startBufferLength;
+          const visibleEndAlong = displayLength + endBufferLength;
           const routeMidAlong = (visibleStartAlong + visibleEndAlong) / 2;
           const center = { x: size.width / 2, y: size.height / 2 };
           const start = {
@@ -1352,16 +1613,17 @@
             direction,
             displayLength,
             displayWidth,
-            movementAreaLength,
+            startBufferLength,
+            endBufferLength,
             startAreaStartAlong: -Infinity,
-            startAreaEndAlong: -movementAreaLength,
-            preMovementStartAlong: -movementAreaLength,
+            startAreaEndAlong: -startBufferLength,
+            preMovementStartAlong: -startBufferLength,
             preMovementEndAlong: 0,
             coreStartAlong: 0,
             coreEndAlong: displayLength,
             postMovementStartAlong: displayLength,
-            postMovementEndAlong: displayLength + movementAreaLength,
-            endAreaStartAlong: displayLength + movementAreaLength,
+            postMovementEndAlong: displayLength + endBufferLength,
+            endAreaStartAlong: displayLength + endBufferLength,
             endAreaEndAlong: Infinity,
             visibleStartAlong,
             visibleEndAlong,
@@ -1506,7 +1768,7 @@
           context.fillStyle = "rgba(255,255,255,.92)";
           context.strokeStyle = "#d8dee9";
           context.lineWidth = 1;
-          roundedRectPath(context, 14, 14, 220, 86, 6);
+          roundedRectPath(context, 14, 14, 240, 108, 6);
           context.fill();
           context.stroke();
           context.textAlign = "left";
@@ -1517,7 +1779,8 @@
           context.fillStyle = "#647086";
           context.font = "12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
           context.fillText(`A=${config.amplitude} / W=${config.width} / ID=${round(metrics.id, 3)}`, 26, 62);
-          context.fillText(interactive ? "表示: 実寸ピクセル" : `表示倍率 ${round(geometry.scale, 3)}`, 26, 82);
+          context.fillText(`Buffer START=${config.startBufferPx} / END=${config.endBufferPx}px`, 26, 82);
+          context.fillText(interactive ? "表示: 実寸ピクセル" : `表示倍率 ${round(geometry.scale, 3)}`, 26, 102);
           context.restore();
         }
 
@@ -1536,32 +1799,33 @@
 
         function setMessage(text, tone) {
           elements.taskMessage.className = `task-message${tone ? ` ${tone}` : ""}`;
-          elements.taskMessage.innerHTML = lastResult && tone === "success"
+          elements.taskMessage.innerHTML = lastResult
             ? `<span>${text}</span><b>全体MT ${lastResult.movementTimeMs} ms · コアMT ${lastResult.coreMovementTimeMs ?? "—"} ms · 逸脱 ${lastResult.deviationCount} 回</b>`
             : `<span>${text}</span>`;
         }
 
         function beginTask() {
-          elements.taskOverlay.hidden = false;
           elements.taskParameterDock.classList.remove("is-open");
+          elements.taskParameterDock.classList.remove("is-dismissed");
+          elements.taskParameterHandle.textContent = "設定";
           elements.taskParameterHandle.setAttribute("aria-expanded", "false");
-          document.body.style.overflow = "hidden";
           lastResult = null;
           activeTrial = null;
-          setMessage("STARTを押したまま、ENDまで移動してください", "");
+          setMessage("START領域内で押して、END領域内でポインタを離してください。", "");
           drawCanvas(elements.taskCanvas, true);
           if (!document.fullscreenElement && elements.taskOverlay.requestFullscreen) {
             elements.taskOverlay.requestFullscreen().catch(() => {});
           }
         }
 
-        async function stopTask() {
-          activeTrial = null;
-          elements.taskOverlay.hidden = true;
-          document.body.style.overflow = "";
-          if (document.fullscreenElement === elements.taskOverlay && document.exitFullscreen) {
-            try { await document.exitFullscreen(); } catch (_) {}
+        function stopTask() {
+          if (activeTrial && elements.taskCanvas.hasPointerCapture(activeTrial.pointerId)) {
+            elements.taskCanvas.releasePointerCapture(activeTrial.pointerId);
           }
+          activeTrial = null;
+          lastResult = null;
+          setMessage("START領域内で押して、END領域内でポインタを離してください。", "");
+          drawCanvas(elements.taskCanvas, true);
         }
 
         function interpolateCrossing(previous, current, targetAlong) {
@@ -1646,9 +1910,11 @@
           if (!taskGeometry) return;
           const point = canvasPoint(event);
           if (!isInsideEndpointZone(point, taskGeometry, "start")) {
-            setMessage("START領域内から開始してください", "error");
+            lastResult = null;
+            setMessage("START領域内から開始してください。", "badStart");
             return;
           }
+          lastResult = null;
           elements.taskCanvas.setPointerCapture(event.pointerId);
           activeTrial = {
             pointerId: event.pointerId,
@@ -1667,7 +1933,7 @@
             trajectory: [{ x: round(point.x, 1), y: round(point.y, 1), t: 0, outside: false, outsidePx: 0 }]
           };
           recordCoreTiming(activeTrial, point, 0);
-          setMessage("計測中 — 通路の中を通ってENDで離してください", "");
+          setMessage("計測中です。END領域内でポインタを離してください。", "tracking");
           drawCanvas(elements.taskCanvas, true);
         });
 
@@ -1688,8 +1954,9 @@
           const success = isInsideEndpointZone(point, trial.path, "end");
           const progress = getPathProgress(point, trial.path);
           if (elements.taskCanvas.hasPointerCapture(event.pointerId)) elements.taskCanvas.releasePointerCapture(event.pointerId);
-          if (success) {
+          if (success || progress >= displaySettings.nearGoalProgressThreshold) {
             lastResult = {
+              success,
               movementTimeMs: Math.round(elapsed),
               coreMovementTimeMs: trial.coreMovementTimeMs,
               deviationCount: trial.deviationCount,
@@ -1700,45 +1967,60 @@
               deviationEvents: trial.deviationEvents
             };
             activeTrial = null;
-            setMessage("完了しました。STARTから再試行できます", "success");
-          } else if (progress >= displaySettings.nearGoalProgressThreshold) {
-            activeTrial = null;
-            lastResult = null;
-            setMessage("ゴール直前で離されました。分析対象エラーとして記録しました", "error");
+            setMessage(
+              success
+                ? "完了しました。START領域から再試行できます。"
+                : "ゴール直前で離されました。分析対象エラーとして記録しました。",
+              success ? "success" : "nearGoal"
+            );
           } else {
             activeTrial = null;
             lastResult = null;
-            setMessage("ENDまで到達していません。STARTからやり直してください", "error");
+            setMessage("ENDまで到達していません。同じ試行をSTART領域からやり直してください。", "retry");
           }
           drawCanvas(elements.taskCanvas, true);
         });
 
-        elements.taskCanvas.addEventListener("pointercancel", () => {
+        elements.taskCanvas.addEventListener("pointercancel", (event) => {
+          if (activeTrial && elements.taskCanvas.hasPointerCapture(event.pointerId)) {
+            elements.taskCanvas.releasePointerCapture(event.pointerId);
+          }
           activeTrial = null;
-          setMessage("試行をキャンセルしました", "error");
+          lastResult = null;
+          setMessage("試行をキャンセルしました。", "cancelled");
           drawCanvas(elements.taskCanvas, true);
         });
 
         ids.forEach((id) => elements[id].addEventListener("input", updateAll));
+        const cancelTrialForParameterChange = () => {
+          if (activeTrial && elements.taskCanvas.hasPointerCapture(activeTrial.pointerId)) {
+            elements.taskCanvas.releasePointerCapture(activeTrial.pointerId);
+          }
+          activeTrial = null;
+          lastResult = null;
+        };
         Object.entries(runInputMap).forEach(([runId, mainId]) => {
           elements[runId].addEventListener("input", () => {
-            if (activeTrial) {
-              if (elements.taskCanvas.hasPointerCapture(activeTrial.pointerId)) {
-                elements.taskCanvas.releasePointerCapture(activeTrial.pointerId);
-              }
-              activeTrial = null;
-              lastResult = null;
-            }
+            cancelTrialForParameterChange();
             elements[mainId].value = elements[runId].value;
             updateAll();
-            setMessage("パラメータを変更しました。START領域から開始してください", "");
+            setMessage("パラメータを変更しました。START領域から開始してください。", "changed");
+          });
+        });
+        [elements.runStartBuffer, elements.runEndBuffer].forEach((input) => {
+          input.addEventListener("input", () => {
+            cancelTrialForParameterChange();
+            updateAll();
+            setMessage("パラメータを変更しました。START領域から開始してください。", "changed");
           });
         });
         document.querySelectorAll(".preset").forEach((button) => {
           button.addEventListener("click", () => {
+            cancelTrialForParameterChange();
             elements.amplitude.value = button.dataset.a;
             elements.width.value = button.dataset.w;
             updateAll();
+            setMessage("パラメータを変更しました。START領域から開始してください。", "changed");
           });
         });
 
@@ -1749,9 +2031,22 @@
         });
 
         elements.startTask.addEventListener("click", beginTask);
-        elements.taskParameterHandle.addEventListener("click", () => {
+        elements.taskParameterHandle.addEventListener("click", (event) => {
           const open = elements.taskParameterDock.classList.toggle("is-open");
+          elements.taskParameterDock.classList.toggle("is-dismissed", !open);
+          elements.taskParameterHandle.textContent = open ? "閉じる" : "設定";
           elements.taskParameterHandle.setAttribute("aria-expanded", String(open));
+          if (!open) event.currentTarget.blur();
+        });
+        elements.closeTaskParameters.addEventListener("click", (event) => {
+          event.currentTarget.blur();
+          elements.taskParameterDock.classList.remove("is-open");
+          elements.taskParameterDock.classList.add("is-dismissed");
+          elements.taskParameterHandle.textContent = "設定";
+          elements.taskParameterHandle.setAttribute("aria-expanded", "false");
+        });
+        elements.taskParameterDock.addEventListener("mouseleave", () => {
+          elements.taskParameterDock.classList.remove("is-dismissed");
         });
         elements.topFullscreen.addEventListener("click", async () => {
           if (document.fullscreenElement) {
@@ -1789,7 +2084,8 @@
               width: config.width,
               steeringId: round(metrics.id, 3),
               angleDeg: config.angle,
-              movementAreaPx: displaySettings.movementAreaPx,
+              startBufferPx: config.startBufferPx,
+              endBufferPx: config.endBufferPx,
               exactPixels: true
             },
             display: {
@@ -1825,6 +2121,19 @@
           });
         });
 
+        document.querySelectorAll("[data-parameter-tab]").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document.querySelectorAll("[data-parameter-tab]").forEach((item) => {
+              const active = item === tab;
+              item.classList.toggle("active", active);
+              item.setAttribute("aria-selected", String(active));
+            });
+            document.querySelectorAll("[data-parameter-panel]").forEach((panel) => {
+              panel.hidden = panel.dataset.parameterPanel !== tab.dataset.parameterTab;
+            });
+          });
+        });
+
         new ResizeObserver(() => {
           drawCanvas(elements.previewCanvas, false);
           if (!elements.taskOverlay.hidden) drawCanvas(elements.taskCanvas, true);
@@ -1833,7 +2142,10 @@
         loadConfig();
         calculateMetrics();
         updateText();
-        requestAnimationFrame(() => drawCanvas(elements.previewCanvas, false));
+        requestAnimationFrame(() => {
+          drawCanvas(elements.previewCanvas, false);
+          drawCanvas(elements.taskCanvas, true);
+        });
       })();
     </script>
   </body>

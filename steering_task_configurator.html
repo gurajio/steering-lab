@@ -1,0 +1,1840 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Steering Lab — 直線ステアリング課題設定</title>
+    <style>
+      :root {
+        --ink: #182332;
+        --muted: #68717d;
+        --paper: #f2efe7;
+        --panel: #fbfaf6;
+        --line: #cac4b8;
+        --lime: #b9f227;
+        --blue: #76a7ff;
+        --orange: #ff6b35;
+        color-scheme: light;
+      }
+
+      * { box-sizing: border-box; }
+
+      html { background: var(--paper); }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 86% 5%, rgba(118, 167, 255, 0.16), transparent 24rem),
+          var(--paper);
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      }
+
+      button, input, select { font: inherit; }
+
+      button:focus-visible, input:focus-visible, select:focus-visible {
+        outline: 3px solid rgba(70, 125, 225, 0.5);
+        outline-offset: 2px;
+      }
+
+      .shell {
+        width: min(1460px, 100%);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 0 34px 28px;
+      }
+
+      header {
+        height: 84px;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .logo {
+        width: 43px;
+        height: 43px;
+        display: grid;
+        place-items: center;
+        border-radius: 4px 13px 4px 4px;
+        background: var(--ink);
+        color: var(--lime);
+        font: 800 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .eyebrow, .kicker {
+        margin: 0;
+        color: var(--muted);
+        font: 700 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.14em;
+      }
+
+      header h1 { margin: 3px 0 0; font-size: 19px; letter-spacing: -0.03em; }
+
+      .saved {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .saved::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #61bc76;
+        box-shadow: 0 0 0 4px rgba(97, 188, 118, 0.14);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        align-items: end;
+        gap: 42px;
+        padding: 42px 0 32px;
+      }
+
+      .hero h2 {
+        margin: 11px 0 0;
+        font-size: clamp(38px, 5vw, 69px);
+        line-height: 1;
+        letter-spacing: -0.065em;
+      }
+
+      .hero-copy {
+        max-width: 530px;
+        margin: 0 0 4px auto;
+        color: #505a65;
+        font-size: 13px;
+        line-height: 1.9;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        margin-bottom: 22px;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+      }
+
+      .metric {
+        min-height: 117px;
+        padding: 17px 19px;
+        display: flex;
+        flex-direction: column;
+        background: var(--panel);
+      }
+
+      .metric.dark { background: var(--ink); color: #fbfaf6; }
+      .metric.lime { background: var(--lime); }
+      .metric.blue { background: var(--blue); }
+
+      .metric > span {
+        font: 700 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.1em;
+        opacity: 0.72;
+      }
+
+      .metric strong {
+        margin-top: auto;
+        font-size: clamp(29px, 3vw, 41px);
+        line-height: 1;
+        letter-spacing: -0.055em;
+      }
+
+      .metric strong small { margin-left: 5px; font-size: 12px; letter-spacing: 0; }
+
+      .metric p {
+        margin: 7px 0 0;
+        font: 650 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        opacity: 0.72;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(335px, 0.36fr) minmax(0, 0.64fr);
+        gap: 22px;
+      }
+
+      .controls, .preview {
+        border: 1px solid var(--line);
+        background: rgba(251, 250, 246, 0.78);
+      }
+
+      .section {
+        padding: 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .section:last-child { border-bottom: 0; }
+
+      .section-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        margin-bottom: 18px;
+      }
+
+      .section-no {
+        width: 27px;
+        height: 27px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--ink);
+        border-radius: 50%;
+        font: 700 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .section-head h3 { margin: 0; font-size: 16px; letter-spacing: -0.025em; }
+      .section-head p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+
+      .preset-row { display: flex; gap: 7px; margin-bottom: 14px; }
+
+      .preset {
+        min-width: 43px;
+        height: 31px;
+        border: 1px solid #bdb7ab;
+        background: transparent;
+        cursor: pointer;
+        font: 700 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .preset:hover, .preset.active { background: var(--ink); border-color: var(--ink); color: white; }
+
+      .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+
+      .field {
+        display: grid;
+        gap: 7px;
+        color: #4f5862;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .field.full { margin-bottom: 11px; }
+
+      .input-wrap {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        border: 1px solid #bdb7ab;
+        background: var(--panel);
+      }
+
+      .input-wrap input {
+        min-width: 0;
+        width: 100%;
+        border: 0;
+        outline: 0;
+        padding: 9px 6px 9px 11px;
+        color: var(--ink);
+        background: transparent;
+        font: 750 15px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .input-wrap b {
+        padding-right: 10px;
+        color: #7d8382;
+        font: 650 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .formula {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 11px;
+        padding: 12px;
+        background: #e5e0d4;
+        font: 650 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .formula strong { color: #215fc9; }
+
+      .angle-row { margin-top: 15px; }
+      .angle-row > span { display: flex; justify-content: space-between; margin-bottom: 6px; }
+      .angle-row output { color: var(--ink); font: 750 14px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .angle-row input { width: 100%; accent-color: var(--ink); }
+
+      .detect-button {
+        margin-top: 13px;
+        padding: 0;
+        border: 0;
+        border-bottom: 1px solid currentColor;
+        color: #215fc9;
+        background: transparent;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 750;
+      }
+
+      .note {
+        margin: 11px 0 0;
+        color: #767e82;
+        font-size: 9px;
+        line-height: 1.65;
+      }
+
+      .screen-size {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 13px;
+        border: 1px solid #bdb7ab;
+      }
+
+      .screen-size div { padding: 10px; border-right: 1px solid #bdb7ab; }
+      .screen-size div:last-child { border-right: 0; }
+      .screen-size span { display: block; color: var(--muted); font: 700 8px/1 monospace; }
+      .screen-size b { display: block; margin-top: 5px; font: 750 12px/1 monospace; }
+
+      .preview {
+        min-width: 0;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .preview-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .preview-head h3 { margin: 4px 0 0; font-size: 17px; }
+
+      .fit {
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: rgba(97, 188, 118, 0.14);
+        color: #30763a;
+        font-size: 9px;
+        font-weight: 750;
+      }
+
+      .fit.warn { background: rgba(255, 107, 53, 0.13); color: #963d1c; }
+
+      .canvas-box {
+        position: relative;
+        height: clamp(360px, 42vw, 570px);
+        min-height: 340px;
+        overflow: hidden;
+        border: 1px solid #bdb7ab;
+        background: #f7f5ef;
+      }
+
+      canvas { display: block; width: 100%; height: 100%; }
+
+      .preview-scale {
+        position: absolute;
+        left: 14px;
+        bottom: 13px;
+        padding: 7px 8px;
+        background: rgba(247, 245, 239, 0.9);
+        font: 700 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .actuals {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border: 1px solid #bdb7ab;
+        border-top: 0;
+      }
+
+      .actuals > div { padding: 13px 14px; border-right: 1px solid #bdb7ab; }
+      .actuals > div:last-child { border-right: 0; }
+      .actuals span { display: block; color: var(--muted); font: 700 8px/1 monospace; }
+      .actuals strong { display: block; margin-top: 6px; font: 750 20px/1 monospace; }
+      .actuals small { font-size: 9px; }
+
+      .warning {
+        display: none;
+        margin: 10px 0 0;
+        padding: 10px 12px;
+        border-left: 3px solid var(--orange);
+        background: rgba(255, 107, 53, 0.08);
+        color: #7e462f;
+        font-size: 10px;
+        line-height: 1.55;
+      }
+
+      .warning.visible { display: block; }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 9px;
+        margin-top: auto;
+        padding-top: 20px;
+      }
+
+      .actions button {
+        min-height: 52px;
+        border: 1px solid var(--ink);
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .start { background: var(--ink); color: white; }
+      .start:hover { background: #26384e; }
+      .start:disabled { opacity: 0.42; cursor: not-allowed; }
+      .export { background: transparent; }
+      .export:hover { background: #e5e0d4; }
+
+      .footer-note { margin: 9px 0 0; color: var(--muted); text-align: right; font-size: 9px; }
+
+      .task-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        grid-template-rows: 60px minmax(0, 1fr) 54px;
+        color: #172033;
+        background: #eef2f8;
+      }
+
+      .task-overlay[hidden] { display: none; }
+      .task-overlay:fullscreen { width: 100%; height: 100%; }
+
+      .task-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 0 17px 0 21px;
+        border-bottom: 1px solid #d8dee9;
+        background: #ffffff;
+      }
+
+      .readout, .task-buttons { display: flex; align-items: center; gap: 11px; }
+      .readout span { color: #1f6feb; font: 800 9px/1 monospace; letter-spacing: 0.1em; }
+      .readout b { padding-left: 11px; border-left: 1px solid #d8dee9; color: #263044; font: 650 10px/1 monospace; }
+
+      .task-buttons button {
+        min-height: 33px;
+        padding: 0 11px;
+        border: 1px solid #b8c1d1;
+        border-radius: 5px;
+        color: #172033;
+        background: #ffffff;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 750;
+      }
+
+      .task-buttons button:disabled { opacity: 0.35; cursor: not-allowed; }
+      .task-buttons .stop { border-color: #a83d30; color: #ffffff; background: #a83d30; }
+
+      .task-workspace {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .task-parameter-dock {
+        position: absolute;
+        z-index: 5;
+        top: 12px;
+        bottom: 12px;
+        left: 0;
+        width: 328px;
+        display: grid;
+        grid-template-columns: 292px 36px;
+        transform: translateX(-292px);
+        transition: transform 180ms ease-out;
+        filter: drop-shadow(8px 12px 20px rgba(23, 32, 51, 0.16));
+        pointer-events: none;
+      }
+
+      .task-parameter-dock:hover,
+      .task-parameter-dock:focus-within,
+      .task-parameter-dock.is-open {
+        transform: translateX(0);
+      }
+
+      .task-parameters {
+        min-height: 0;
+        overflow: auto;
+        padding: 15px;
+        border: 1px solid #cbd3df;
+        border-right: 0;
+        border-radius: 7px 0 0 7px;
+        background: #ffffff;
+        pointer-events: auto;
+      }
+
+      .task-parameter-handle {
+        min-width: 0;
+        height: 104px;
+        margin-top: 14px;
+        padding: 0;
+        border: 1px solid #1754b5;
+        border-radius: 0 7px 7px 0;
+        color: #ffffff;
+        background: #1f6feb;
+        cursor: pointer;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .16em;
+        pointer-events: auto;
+      }
+
+      .task-parameter-handle::before {
+        content: "◂";
+        margin-bottom: 8px;
+        font-size: 13px;
+        letter-spacing: 0;
+      }
+
+      .task-parameter-dock:hover .task-parameter-handle::before,
+      .task-parameter-dock:focus-within .task-parameter-handle::before,
+      .task-parameter-dock.is-open .task-parameter-handle::before { content: "▸"; }
+
+      .task-parameters h2 { margin: 0 0 5px; font-size: 15px; }
+      .task-parameters > p { margin: 0 0 14px; color: #647086; font-size: 10px; line-height: 1.55; }
+      .task-parameters .control-card { margin-bottom: 11px; padding: 12px; }
+      .task-parameters .field-grid { gap: 8px; }
+      .task-parameters .field { gap: 5px; }
+      .task-parameters .input-wrap { min-height: 37px; }
+      .task-parameters .input-wrap input { padding-block: 7px; font-size: 13px; }
+      .task-parameters .run-angle { margin-top: 10px; }
+
+      .run-actuals {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+
+      .run-actuals div {
+        padding: 9px;
+        border: 1px solid #d8dee9;
+        border-radius: 5px;
+        background: #f9fbff;
+      }
+
+      .run-actuals span { display: block; color: #647086; font-size: 9px; font-weight: 700; }
+      .run-actuals b { display: block; margin-top: 4px; font: 750 12px/1 monospace; }
+
+      .task-stage {
+        position: absolute;
+        inset: 0;
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
+        padding: 16px;
+        background: #eef2f8;
+      }
+
+      .task-stage canvas {
+        display: block;
+        border: 1px solid #aeb8c8;
+        border-radius: 8px;
+        touch-action: none;
+        cursor: crosshair;
+      }
+
+      .task-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        padding: 8px 14px;
+        border-top: 1px solid #d8dee9;
+        background: #ffffff;
+        color: #263044;
+        text-align: center;
+        font-size: 11px;
+      }
+
+      .task-message b { color: #16794c; font: 700 10px/1 monospace; }
+      .task-message.error { color: #a83d30; }
+      .task-message.success { color: #16794c; }
+
+      @media (max-width: 980px) {
+        .hero { grid-template-columns: 1fr; gap: 18px; }
+        .hero-copy { margin-left: 0; }
+        .metrics { grid-template-columns: 1fr 1fr; }
+        .workspace { grid-template-columns: 1fr; }
+        .canvas-box { height: 480px; }
+      }
+
+      @media (max-width: 620px) {
+        .shell { padding-inline: 13px; }
+        .saved { display: none; }
+        .hero { padding: 32px 0 25px; }
+        .hero h2 { font-size: 40px; }
+        .metric { min-height: 102px; padding: 14px; }
+        .section, .preview { padding: 17px; }
+        .preview-head { align-items: flex-start; flex-direction: column; }
+        .canvas-box { height: 330px; min-height: 290px; }
+        .actuals, .actions { grid-template-columns: 1fr; }
+        .actuals > div { border-right: 0; border-bottom: 1px solid #bdb7ab; }
+        .actuals > div:last-child { border-bottom: 0; }
+        .task-toolbar { align-items: flex-start; padding: 9px; }
+        .readout { flex-wrap: wrap; gap: 6px; }
+        .readout b:nth-of-type(n + 3) { display: none; }
+        .task-buttons { flex-direction: column; align-items: stretch; }
+        .task-parameter-dock {
+          width: 286px;
+          grid-template-columns: 250px 36px;
+          transform: translateX(-250px);
+        }
+        .task-parameter-dock:hover,
+        .task-parameter-dock:focus-within,
+        .task-parameter-dock.is-open { transform: translateX(0); }
+      }
+
+      /* Experiment-console layout, based on the attached steering task UI. */
+      :root {
+        --ink: #172033;
+        --muted: #647086;
+        --paper: #f5f7fb;
+        --panel: #ffffff;
+        --line: #d8dee9;
+        --lime: #eef5ff;
+        --blue: #eaf1ff;
+        --orange: #c43a31;
+        --primary: #1f6feb;
+        --primary-dark: #1754b5;
+        --green: #16794c;
+        --amber: #9a6700;
+      }
+
+      body { min-width: 320px; overflow: hidden; background: var(--paper); }
+
+      .shell {
+        width: 100%;
+        height: 100vh;
+        min-height: 560px;
+        padding: 0;
+        display: grid;
+        grid-template-rows: 60px 46px minmax(0, 1fr) 42px;
+        background: var(--paper);
+      }
+
+      .shell:fullscreen { width: 100%; height: 100%; }
+
+      .app-header {
+        height: auto;
+        min-width: 0;
+        padding: 9px 14px;
+        gap: 11px;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .app-header .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 6px;
+        color: #fff;
+        background: var(--primary);
+      }
+
+      .app-title { min-width: 165px; }
+      .app-title h1 { margin: 2px 0 0; font-size: 15px; }
+
+      .status-strip {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-left: 8px;
+      }
+
+      .chip {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: #263044;
+        background: #f9fbff;
+        white-space: nowrap;
+        font-size: 11px;
+      }
+
+      .chip span { color: var(--muted); font-size: 10px; font-weight: 700; }
+      .chip b { font: 750 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+      .header-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .header-actions button {
+        min-height: 34px;
+        padding: 0 11px;
+        border: 1px solid #b8c1d1;
+        border-radius: 6px;
+        color: var(--ink);
+        background: #fff;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .header-actions button:hover { border-color: var(--primary); color: var(--primary); }
+
+      .tabs {
+        display: flex;
+        align-items: end;
+        gap: 2px;
+        padding: 6px 14px 0;
+        border-bottom: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .tab {
+        position: relative;
+        min-width: 122px;
+        height: 39px;
+        padding: 0 15px;
+        border: 1px solid transparent;
+        border-bottom: 0;
+        border-radius: 6px 6px 0 0;
+        color: var(--muted);
+        background: transparent;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .tab:hover { color: var(--primary); background: #f5f8fd; }
+
+      .tab.active {
+        z-index: 1;
+        color: var(--primary);
+        border-color: var(--line);
+        background: var(--paper);
+      }
+
+      .tab.active::after {
+        content: "";
+        position: absolute;
+        left: 13px;
+        right: 13px;
+        bottom: 0;
+        height: 3px;
+        background: var(--primary);
+      }
+
+      .workspace {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 0;
+      }
+
+      .controls {
+        min-height: 0;
+        overflow: auto;
+        border: 0;
+        border-right: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .tab-panel { min-height: 100%; padding: 16px; }
+      .tab-panel[hidden] { display: none; }
+
+      .panel-title { margin-bottom: 15px; }
+      .panel-title h2 { margin: 0 0 5px; font-size: 16px; }
+      .panel-title p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+
+      .control-card {
+        margin-bottom: 13px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+      }
+
+      .control-card h3 { margin: 0 0 12px; color: #263044; font-size: 12px; }
+      .preset-row { margin-bottom: 12px; }
+      .preset { border-radius: 5px; background: #f9fbff; }
+      .preset:hover, .preset.active { background: #eef5ff; border-color: var(--primary); color: var(--primary); }
+      .input-wrap { min-height: 40px; border-color: #b8c1d1; border-radius: 6px; }
+      .formula { border-radius: 5px; background: #eef5ff; }
+
+      .measure-stack { display: grid; gap: 10px; }
+
+      .measure-card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--primary);
+        border-radius: 6px;
+        background: #f9fbff;
+      }
+
+      .measure-card span { display: block; color: var(--muted); font-size: 10px; font-weight: 700; }
+      .measure-card strong { display: block; margin-top: 6px; font: 750 25px/1 monospace; }
+      .measure-card strong small { font-size: 11px; }
+
+      .calculation {
+        margin-top: 13px;
+        padding: 13px;
+        border: 1px solid #c8d8f2;
+        border-radius: 6px;
+        background: #eef5ff;
+        color: #21436f;
+        font-size: 10px;
+        line-height: 1.75;
+      }
+
+      .preview {
+        min-width: 0;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        display: grid;
+        grid-template-rows: 48px minmax(0, 1fr) 52px;
+        background: #eef2f8;
+      }
+
+      .preview-head {
+        min-width: 0;
+        margin: 0;
+        padding: 8px 13px;
+        border-bottom: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .preview-head h3 { margin: 0; font-size: 13px; }
+      .preview-meta { display: flex; align-items: center; gap: 8px; }
+      .fit { border: 1px solid #b9dfc7; border-radius: 6px; background: #f0fbf5; }
+      .fit.warn { border-color: #f0c5bd; background: #fff7f6; color: #a83d30; }
+
+      .canvas-box {
+        height: auto;
+        min-height: 0;
+        margin: 12px;
+        border: 1px solid #b8c1d1;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .preview-scale {
+        left: 10px;
+        bottom: 10px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        color: var(--muted);
+        background: rgba(255,255,255,.92);
+      }
+
+      .preview-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 7px 12px;
+        border-top: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .actuals {
+        width: auto;
+        display: flex;
+        border: 0;
+        gap: 7px;
+      }
+
+      .actuals > div {
+        min-width: 104px;
+        padding: 6px 9px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: #f9fbff;
+      }
+
+      .actuals strong { margin-top: 3px; font-size: 13px; }
+
+      .actions { margin: 0; padding: 0; display: flex; grid-template-columns: none; }
+      .actions button { min-height: 36px; padding: 0 12px; border-radius: 6px; }
+      .actions .start { border-color: var(--primary); background: var(--primary); }
+      .actions .start:hover { background: var(--primary-dark); }
+      .actions .export { display: none; }
+      .warning { position: absolute; right: 16px; bottom: 66px; z-index: 3; max-width: 520px; }
+
+      .bottom-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 0 14px;
+        border-top: 1px solid var(--line);
+        background: #fff;
+        color: #263044;
+        font-size: 10px;
+      }
+
+      .bottom-bar .ready { color: var(--green); font-weight: 700; }
+      .bottom-bar .hint { color: var(--muted); }
+
+      @media (max-width: 900px) {
+        .status-strip .chip:nth-child(n + 4) { display: none; }
+        .workspace { grid-template-columns: 300px minmax(0, 1fr); }
+      }
+
+      @media (max-width: 680px) {
+        body { overflow: auto; }
+        .shell { min-height: 100vh; height: auto; grid-template-rows: auto auto auto auto; }
+        .app-header { flex-wrap: wrap; }
+        .status-strip { order: 3; width: 100%; margin-left: 0; overflow-x: auto; }
+        .header-actions { margin-left: auto; }
+        .header-actions #exportConfig { display: none; }
+        .tabs { overflow-x: auto; }
+        .tab { min-width: 108px; }
+        .workspace { grid-template-columns: 1fr; }
+        .controls { max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+        .preview { min-height: 560px; }
+        .preview-footer { align-items: flex-start; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="appShell" class="shell">
+      <header class="app-header">
+        <div class="logo" aria-hidden="true">SL</div>
+        <div class="app-title">
+          <p class="eyebrow">STEERING EXPERIMENT</p>
+          <h1>直線ステアリング課題設定</h1>
+        </div>
+        <div class="status-strip" aria-label="現在の設定">
+          <div class="chip"><span>A</span><b><output id="metricA">1050</output> px</b></div>
+          <div class="chip"><span>W</span><b><output id="metricW">30</output> px</b></div>
+          <div class="chip"><span>ID</span><b><output id="metricId">35</output></b></div>
+          <div class="chip"><span>A実寸</span><b><output id="metricAMm">—</output> mm</b></div>
+          <div class="chip"><span>W実寸</span><b><output id="metricWMm">—</output> mm</b></div>
+          <div class="chip"><span>密度</span><b><output id="metricPpi">—</output> ppi</b></div>
+        </div>
+        <div class="header-actions">
+          <button id="topFullscreen" type="button">全画面</button>
+          <button id="exportConfig" type="button">JSON保存</button>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="設定項目">
+        <button class="tab active" type="button" data-tab="task">課題設定</button>
+        <button class="tab" type="button" data-tab="screen">画面設定</button>
+        <button class="tab" type="button" data-tab="measure">実寸・ID確認</button>
+      </nav>
+
+      <div class="workspace">
+        <aside class="controls">
+          <section class="tab-panel" data-panel="task">
+            <div class="panel-title">
+              <h2>課題設定</h2>
+              <p>A・W・直線角度を変更すると、右のプレビューへ即時反映されます。</p>
+            </div>
+            <div class="control-card">
+              <h3>既存条件プリセット</h3>
+              <div class="preset-row" aria-label="既存条件プリセット">
+                <button class="preset" type="button" data-a="1050" data-w="30" title="A固定・W広い">C1</button>
+                <button class="preset" type="button" data-a="1050" data-w="21" title="A固定・W狭い">C2</button>
+                <button class="preset" type="button" data-a="1250" data-w="25" title="W固定・A長い">C3</button>
+                <button class="preset" type="button" data-a="875" data-w="25" title="W固定・A短い">C4</button>
+              </div>
+              <div class="field-grid">
+                <label class="field" for="amplitude">A · 移動距離
+                  <span class="input-wrap"><input id="amplitude" type="number" min="40" max="4000" step="1" value="1050" /><b>px</b></span>
+                </label>
+                <label class="field" for="width">W · 通路幅
+                  <span class="input-wrap"><input id="width" type="number" min="8" max="600" step="1" value="30" /><b>px</b></span>
+                </label>
+              </div>
+              <div class="formula"><span>ID = A / W</span><strong id="formulaValue">1050 / 30 = 35</strong></div>
+            </div>
+            <div class="control-card">
+              <h3>形状</h3>
+              <label class="field full">課題形状
+                <span class="input-wrap"><input value="直線 / Straight" disabled /><b>固定</b></span>
+              </label>
+              <label class="field angle-row" for="angle">
+                <span><b>直線の角度</b><output id="angleValue">30°</output></span>
+                <input id="angle" type="range" min="0" max="180" step="1" value="30" />
+              </label>
+            </div>
+          </section>
+
+          <section class="tab-panel" data-panel="screen" hidden>
+            <div class="panel-title">
+              <h2>画面設定</h2>
+              <p>使用するモニターの対角インチと、ブラウザ上の画面サイズを設定します。</p>
+            </div>
+            <div class="control-card">
+              <label class="field full" for="diagonal">画面の対角サイズ
+                <span class="input-wrap"><input id="diagonal" type="number" min="5" max="100" step="0.1" value="24" /><b>inch</b></span>
+              </label>
+              <div class="field-grid">
+                <label class="field" for="screenWidth">画面の横
+                  <span class="input-wrap"><input id="screenWidth" type="number" min="320" max="10000" step="1" value="1920" /><b>CSS px</b></span>
+                </label>
+                <label class="field" for="screenHeight">画面の縦
+                  <span class="input-wrap"><input id="screenHeight" type="number" min="240" max="10000" step="1" value="1080" /><b>CSS px</b></span>
+                </label>
+              </div>
+              <button id="detectScreen" class="detect-button" type="button">この画面のサイズを自動取得</button>
+              <p class="note">対角インチはモニター仕様の値を入力してください。縦横はブラウザが取得するCSS pxを使います。</p>
+            </div>
+            <div class="control-card">
+              <h3>算出した画面実寸</h3>
+              <div class="screen-size">
+                <div><span>画面横</span><b><output id="screenWidthMm">—</output> mm</b></div>
+                <div><span>画面縦</span><b><output id="screenHeightMm">—</output> mm</b></div>
+                <div><span>対角</span><b><output id="screenDiagonalMm">—</output> mm</b></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tab-panel" data-panel="measure" hidden>
+            <div class="panel-title">
+              <h2>実寸・ID確認</h2>
+              <p>現在設定している課題の実寸値と計算方法です。</p>
+            </div>
+            <div class="measure-stack">
+              <div class="measure-card"><span>A · 移動距離</span><strong><output id="actualA">—</output><small> mm</small></strong></div>
+              <div class="measure-card"><span>W · 通路幅</span><strong><output id="actualW">—</output><small> mm</small></strong></div>
+              <div class="measure-card"><span>STEERING ID · A / W</span><strong><output id="measureId">35</output></strong></div>
+              <div class="measure-card"><span>1 CSS px</span><strong><output id="metricMmPx">—</output><small> mm</small></strong></div>
+            </div>
+            <div class="calculation">
+              <b>計算方法</b><br />
+              PPI = √(画面横² + 画面縦²) ÷ 対角インチ<br />
+              mm/px = 25.4 ÷ PPI<br />
+              A実寸 = A × mm/px ／ W実寸 = W × mm/px
+            </div>
+          </section>
+        </aside>
+
+        <section class="preview">
+          <div class="preview-head">
+            <h3>直線課題プレビュー</h3>
+            <div class="preview-meta">
+              <span id="fitBadge" class="fit">● 全画面に実寸で収まります</span>
+            </div>
+          </div>
+          <div class="canvas-box">
+            <canvas id="previewCanvas" aria-label="直線課題の常時プレビュー"></canvas>
+            <div class="preview-scale">設定プレビュー · 全画面試行は1設定px = 1CSS px</div>
+            <p id="fitWarning" class="warning"></p>
+          </div>
+          <div class="preview-footer">
+            <div class="actuals">
+              <div><span>A実寸</span><strong><output id="previewAMm">—</output><small> mm</small></strong></div>
+              <div><span>W実寸</span><strong><output id="previewWMm">—</output><small> mm</small></strong></div>
+              <div><span>ANGLE</span><strong><output id="actualAngle">30</output><small>°</small></strong></div>
+            </div>
+            <div class="actions">
+              <button id="startTask" class="start" type="button">実寸で試行開始</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="bottom-bar">
+        <span class="ready">● 設定変更はプレビューへ即時反映</span>
+        <span class="hint">上部タブで設定を切替 · Escで全画面解除 · 設定は自動保存</span>
+      </footer>
+    </main>
+
+    <section id="taskOverlay" class="task-overlay" hidden aria-label="全画面ステアリング課題">
+      <div class="task-toolbar">
+        <div class="readout">
+          <span>STRAIGHT TASK</span>
+          <b id="runA">A 1050px</b>
+          <b id="runW">W 30px</b>
+          <b id="runId">ID 35</b>
+          <b id="runMm">— mm</b>
+        </div>
+        <div class="task-buttons">
+          <button id="returnFullscreen" type="button" hidden>全画面に戻す</button>
+          <button id="exitFullscreen" type="button">全画面解除</button>
+          <button id="stopTask" class="stop" type="button">試行を終了</button>
+        </div>
+      </div>
+      <div class="task-workspace">
+        <div id="taskParameterDock" class="task-parameter-dock">
+        <aside id="taskParameters" class="task-parameters" aria-label="全画面課題のパラメータ設定">
+          <h2>パラメータ設定</h2>
+          <p>試行画面を閉じずに変更できます。変更時は進行中の試行だけをキャンセルします。</p>
+          <div class="control-card">
+            <h3>直線課題</h3>
+            <div class="field-grid">
+              <label class="field" for="runAmplitude">A · 移動距離
+                <span class="input-wrap"><input id="runAmplitude" type="number" min="40" max="4000" step="1" value="1050" /><b>px</b></span>
+              </label>
+              <label class="field" for="runWidthInput">W · 通路幅
+                <span class="input-wrap"><input id="runWidthInput" type="number" min="8" max="600" step="1" value="30" /><b>px</b></span>
+              </label>
+            </div>
+            <label class="field angle-row run-angle" for="runAngle">
+              <span><b>直線の角度</b><output id="runAngleValue">30°</output></span>
+              <input id="runAngle" type="range" min="0" max="180" step="1" value="30" />
+            </label>
+          </div>
+          <div class="control-card">
+            <h3>画面設定</h3>
+            <label class="field full" for="runDiagonal">対角サイズ
+              <span class="input-wrap"><input id="runDiagonal" type="number" min="5" max="100" step="0.1" value="24" /><b>inch</b></span>
+            </label>
+            <div class="field-grid">
+              <label class="field" for="runScreenWidth">画面の横
+                <span class="input-wrap"><input id="runScreenWidth" type="number" min="320" max="10000" step="1" value="1920" /><b>px</b></span>
+              </label>
+              <label class="field" for="runScreenHeight">画面の縦
+                <span class="input-wrap"><input id="runScreenHeight" type="number" min="240" max="10000" step="1" value="1080" /><b>px</b></span>
+              </label>
+            </div>
+          </div>
+          <div class="run-actuals" aria-label="現在の実寸値">
+            <div><span>A実寸</span><b><output id="runActualA">—</output> mm</b></div>
+            <div><span>W実寸</span><b><output id="runActualW">—</output> mm</b></div>
+            <div><span>ID = A / W</span><b><output id="runActualId">35</output></b></div>
+            <div><span>1 CSS px</span><b><output id="runMmPerPx">—</output> mm</b></div>
+          </div>
+        </aside>
+        <button id="taskParameterHandle" class="task-parameter-handle" type="button" aria-controls="taskParameters" aria-expanded="false" title="カーソルを合わせると設定を表示">設定</button>
+        </div>
+        <div class="task-stage"><canvas id="taskCanvas" aria-label="直線ステアリング課題"></canvas></div>
+      </div>
+      <div id="taskMessage" class="task-message" role="status" aria-live="polite">
+        STARTを押したまま、ENDまで移動してください
+      </div>
+    </section>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const STORAGE_KEY = "steering-task-configurator-html-v1";
+        const defaults = {
+          amplitude: 1050,
+          width: 30,
+          angle: 30,
+          diagonal: 24,
+          screenWidth: 1920,
+          screenHeight: 1080
+        };
+        const displaySettings = Object.freeze({
+          marginPx: 88,
+          movementAreaPx: 200,
+          minCorridorWidthPx: 8,
+          deviationThresholdPx: 24,
+          nearGoalProgressThreshold: 0.9
+        });
+        const ids = ["amplitude", "width", "angle", "diagonal", "screenWidth", "screenHeight"];
+        const runInputMap = Object.freeze({
+          runAmplitude: "amplitude",
+          runWidthInput: "width",
+          runAngle: "angle",
+          runDiagonal: "diagonal",
+          runScreenWidth: "screenWidth",
+          runScreenHeight: "screenHeight"
+        });
+        const elements = Object.fromEntries(
+          [
+            ...ids,
+            "metricA", "metricAMm", "metricW", "metricWMm", "metricId", "metricPpi", "metricMmPx",
+            "formulaValue", "angleValue", "screenWidthMm", "screenHeightMm", "screenDiagonalMm",
+            "actualA", "actualW", "actualAngle", "previewAMm", "previewWMm", "measureId",
+            "fitBadge", "fitWarning", "detectScreen", "startTask", "topFullscreen", "appShell",
+            "exportConfig", "previewCanvas", "taskOverlay", "taskCanvas", "runA", "runW", "runId", "runMm",
+            "returnFullscreen", "exitFullscreen", "stopTask", "taskMessage",
+            "taskParameterDock", "taskParameterHandle",
+            ...Object.keys(runInputMap), "runAngleValue", "runActualA", "runActualW", "runActualId", "runMmPerPx"
+          ].map((id) => [id, document.getElementById(id)])
+        );
+
+        let config = { ...defaults };
+        let metrics = {};
+        let previewGeometry = null;
+        let taskGeometry = null;
+        let activeTrial = null;
+        let lastResult = null;
+        elements.appShell.append(elements.taskOverlay);
+
+        const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+        const round = (value, digits = 2) => {
+          const factor = 10 ** digits;
+          return Math.round(value * factor) / factor;
+        };
+
+        function loadConfig() {
+          try {
+            const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+            if (stored) config = { ...defaults, ...stored };
+            else if (window.screen.width && window.screen.height) {
+              config.screenWidth = window.screen.width;
+              config.screenHeight = window.screen.height;
+            }
+          } catch (_) {
+            config.screenWidth = window.screen.width || defaults.screenWidth;
+            config.screenHeight = window.screen.height || defaults.screenHeight;
+          }
+          ids.forEach((id) => { elements[id].value = config[id]; });
+        }
+
+        function readConfig() {
+          config = {
+            amplitude: clamp(Number(elements.amplitude.value) || defaults.amplitude, 40, 4000),
+            width: clamp(Number(elements.width.value) || defaults.width, 8, 600),
+            angle: clamp(Number(elements.angle.value) || 0, 0, 180),
+            diagonal: clamp(Number(elements.diagonal.value) || defaults.diagonal, 5, 100),
+            screenWidth: clamp(Number(elements.screenWidth.value) || defaults.screenWidth, 320, 10000),
+            screenHeight: clamp(Number(elements.screenHeight.value) || defaults.screenHeight, 240, 10000)
+          };
+          ids.forEach((id) => { elements[id].value = config[id]; });
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); } catch (_) {}
+        }
+
+        function calculateMetrics() {
+          const diagonalPx = Math.hypot(config.screenWidth, config.screenHeight);
+          const ppi = diagonalPx / config.diagonal;
+          const mmPerPx = 25.4 / ppi;
+          const id = config.amplitude / config.width;
+          const radians = config.angle * Math.PI / 180;
+          const totalLength = config.amplitude + displaySettings.movementAreaPx * 2;
+          const projectedWidth = Math.abs(Math.cos(radians)) * totalLength + Math.abs(Math.sin(radians)) * config.width;
+          const projectedHeight = Math.abs(Math.sin(radians)) * totalLength + Math.abs(Math.cos(radians)) * config.width;
+          const requiredWidth = Math.ceil(projectedWidth + displaySettings.marginPx * 2);
+          const requiredHeight = Math.ceil(projectedHeight + displaySettings.marginPx * 2);
+          metrics = {
+            ppi,
+            mmPerPx,
+            id,
+            amplitudeMm: config.amplitude * mmPerPx,
+            widthMm: config.width * mmPerPx,
+            screenWidthMm: config.screenWidth * mmPerPx,
+            screenHeightMm: config.screenHeight * mmPerPx,
+            screenDiagonalMm: config.diagonal * 25.4,
+            requiredWidth,
+            requiredHeight,
+            fits: requiredWidth <= config.screenWidth && requiredHeight <= config.screenHeight
+          };
+        }
+
+        function updateText() {
+          elements.metricA.textContent = config.amplitude;
+          elements.metricW.textContent = config.width;
+          elements.metricAMm.textContent = round(metrics.amplitudeMm, 1);
+          elements.metricWMm.textContent = round(metrics.widthMm, 1);
+          elements.metricId.textContent = round(metrics.id, 3);
+          elements.metricPpi.textContent = round(metrics.ppi, 1);
+          elements.metricMmPx.textContent = round(metrics.mmPerPx, 3);
+          elements.formulaValue.textContent = `${config.amplitude} / ${config.width} = ${round(metrics.id, 3)}`;
+          elements.angleValue.textContent = `${config.angle}°`;
+          elements.screenWidthMm.textContent = round(metrics.screenWidthMm, 1);
+          elements.screenHeightMm.textContent = round(metrics.screenHeightMm, 1);
+          elements.screenDiagonalMm.textContent = round(metrics.screenDiagonalMm, 1);
+          elements.actualA.textContent = round(metrics.amplitudeMm, 2);
+          elements.actualW.textContent = round(metrics.widthMm, 2);
+          elements.previewAMm.textContent = round(metrics.amplitudeMm, 2);
+          elements.previewWMm.textContent = round(metrics.widthMm, 2);
+          elements.measureId.textContent = round(metrics.id, 3);
+          elements.actualAngle.textContent = config.angle;
+          elements.runA.textContent = `A ${config.amplitude}px`;
+          elements.runW.textContent = `W ${config.width}px`;
+          elements.runId.textContent = `ID ${round(metrics.id, 3)}`;
+          elements.runMm.textContent = `${round(metrics.amplitudeMm, 1)} × ${round(metrics.widthMm, 1)} mm`;
+          Object.entries(runInputMap).forEach(([runId, mainId]) => {
+            if (document.activeElement !== elements[runId]) elements[runId].value = config[mainId];
+          });
+          elements.runAngleValue.textContent = `${config.angle}°`;
+          elements.runActualA.textContent = round(metrics.amplitudeMm, 2);
+          elements.runActualW.textContent = round(metrics.widthMm, 2);
+          elements.runActualId.textContent = round(metrics.id, 3);
+          elements.runMmPerPx.textContent = round(metrics.mmPerPx, 3);
+
+          if (metrics.fits) {
+            elements.fitBadge.className = "fit";
+            elements.fitBadge.textContent = "● 全画面に実寸で収まります";
+            elements.fitWarning.className = "warning";
+          } else {
+            elements.fitBadge.className = "fit warn";
+            elements.fitBadge.textContent = "▲ 画面サイズを超えます";
+            elements.fitWarning.className = "warning visible";
+            elements.fitWarning.textContent = `必要領域の目安は ${metrics.requiredWidth} × ${metrics.requiredHeight} CSS pxです。A・W・角度、または画面設定を調整してください。`;
+          }
+          elements.startTask.disabled = false;
+
+          document.querySelectorAll(".preset").forEach((button) => {
+            button.classList.toggle(
+              "active",
+              Number(button.dataset.a) === config.amplitude && Number(button.dataset.w) === config.width
+            );
+          });
+        }
+
+        function preferredCanvasSize(canvas) {
+          const angle = config.angle * Math.PI / 180;
+          const totalLength = config.amplitude + displaySettings.movementAreaPx * 2;
+          const requiredWidth = Math.ceil(Math.abs(Math.cos(angle) * totalLength) + displaySettings.marginPx * 2);
+          const requiredHeight = Math.ceil(Math.abs(Math.sin(angle) * totalLength) + displaySettings.marginPx * 2);
+          const shell = canvas.parentElement;
+          const rect = shell.getBoundingClientRect();
+          const style = getComputedStyle(shell);
+          const contentWidth = rect.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+          const contentHeight = rect.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+          return {
+            width: Math.max(1, Math.floor(contentWidth), requiredWidth),
+            height: Math.max(1, Math.floor(contentHeight), requiredHeight)
+          };
+        }
+
+        function resizeCanvas(canvas, exactPixels) {
+          if (exactPixels) {
+            const preferred = preferredCanvasSize(canvas);
+            canvas.style.width = `${preferred.width}px`;
+            canvas.style.height = `${preferred.height}px`;
+          } else {
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+          }
+          const rect = canvas.getBoundingClientRect();
+          const dpr = window.devicePixelRatio || 1;
+          const pixelWidth = Math.max(1, Math.round(rect.width * dpr));
+          const pixelHeight = Math.max(1, Math.round(rect.height * dpr));
+          if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+            canvas.width = pixelWidth;
+            canvas.height = pixelHeight;
+          }
+          const context = canvas.getContext("2d");
+          context.setTransform(dpr, 0, 0, dpr, 0, 0);
+          return { context, width: rect.width, height: rect.height };
+        }
+
+        function makePath(canvas, exactPixels) {
+          const size = resizeCanvas(canvas, exactPixels);
+          const angle = config.angle * Math.PI / 180;
+          const direction = { x: Math.cos(angle), y: -Math.sin(angle) };
+          const totalLength = config.amplitude + displaySettings.movementAreaPx * 2;
+          const projectedWidth = Math.abs(direction.x) * totalLength + Math.abs(direction.y) * config.width;
+          const projectedHeight = Math.abs(direction.y) * totalLength + Math.abs(direction.x) * config.width;
+          const scale = exactPixels ? 1 : clamp(Math.min(
+            (size.width - displaySettings.marginPx * 2) / Math.max(projectedWidth, 1),
+            (size.height - displaySettings.marginPx * 2) / Math.max(projectedHeight, 1),
+            1
+          ), 0.05, 1);
+          const displayLength = config.amplitude * scale;
+          const displayWidth = Math.max(config.width * scale, displaySettings.minCorridorWidthPx);
+          const movementAreaLength = displaySettings.movementAreaPx * scale;
+          const visibleStartAlong = -movementAreaLength;
+          const visibleEndAlong = displayLength + movementAreaLength;
+          const routeMidAlong = (visibleStartAlong + visibleEndAlong) / 2;
+          const center = { x: size.width / 2, y: size.height / 2 };
+          const start = {
+            x: center.x - direction.x * routeMidAlong,
+            y: center.y - direction.y * routeMidAlong
+          };
+          const end = {
+            x: start.x + direction.x * displayLength,
+            y: start.y + direction.y * displayLength
+          };
+          return {
+            start,
+            end,
+            center,
+            direction,
+            displayLength,
+            displayWidth,
+            movementAreaLength,
+            startAreaStartAlong: -Infinity,
+            startAreaEndAlong: -movementAreaLength,
+            preMovementStartAlong: -movementAreaLength,
+            preMovementEndAlong: 0,
+            coreStartAlong: 0,
+            coreEndAlong: displayLength,
+            postMovementStartAlong: displayLength,
+            postMovementEndAlong: displayLength + movementAreaLength,
+            endAreaStartAlong: displayLength + movementAreaLength,
+            endAreaEndAlong: Infinity,
+            visibleStartAlong,
+            visibleEndAlong,
+            scale,
+            angle,
+            size
+          };
+        }
+
+        function pathCoordinates(point, path = taskGeometry) {
+          const dx = point.x - path.start.x;
+          const dy = point.y - path.start.y;
+          return {
+            along: dx * path.direction.x + dy * path.direction.y,
+            perpendicular: dx * -path.direction.y + dy * path.direction.x
+          };
+        }
+
+        function getVisibleAlongRange(path) {
+          const corners = [
+            { x: 0, y: 0 },
+            { x: path.size.width, y: 0 },
+            { x: path.size.width, y: path.size.height },
+            { x: 0, y: path.size.height }
+          ].map((point) => pathCoordinates(point, path).along);
+          return {
+            start: Math.min(...corners) - path.displayWidth,
+            end: Math.max(...corners) + path.displayWidth
+          };
+        }
+
+        function isInsideEndpointZone(point, path, endpoint) {
+          const coords = pathCoordinates(point, path);
+          if (Math.abs(coords.perpendicular) > path.displayWidth / 2) return false;
+          if (endpoint === "start") {
+            return coords.along >= path.startAreaStartAlong && coords.along <= path.startAreaEndAlong;
+          }
+          return coords.along >= path.endAreaStartAlong && coords.along <= path.endAreaEndAlong;
+        }
+
+        function getCorridorDeviation(point, path) {
+          const coords = pathCoordinates(point, path);
+          const outsidePx = Math.max(Math.abs(coords.perpendicular) - path.displayWidth / 2, 0);
+          return { inside: outsidePx <= 0, outsidePx };
+        }
+
+        function getPathProgress(point, path) {
+          return clamp(pathCoordinates(point, path).along / Math.max(path.displayLength, 1), 0, 1);
+        }
+
+        function pointAlongPath(path, along) {
+          return {
+            x: path.start.x + path.direction.x * along,
+            y: path.start.y + path.direction.y * along
+          };
+        }
+
+        function drawCorridorSegment(context, path, fromAlong, toAlong, fillStyle, strokeStyle) {
+          const normal = { x: -path.direction.y, y: path.direction.x };
+          const half = path.displayWidth / 2;
+          const start = pointAlongPath(path, fromAlong);
+          const end = pointAlongPath(path, toAlong);
+          context.fillStyle = fillStyle;
+          context.beginPath();
+          context.moveTo(start.x + normal.x * half, start.y + normal.y * half);
+          context.lineTo(end.x + normal.x * half, end.y + normal.y * half);
+          context.lineTo(end.x - normal.x * half, end.y - normal.y * half);
+          context.lineTo(start.x - normal.x * half, start.y - normal.y * half);
+          context.closePath();
+          context.fill();
+          if (strokeStyle) {
+            context.strokeStyle = strokeStyle;
+            context.lineWidth = 2;
+            context.stroke();
+          }
+        }
+
+        function roundedRectPath(context, x, y, width, height, radius) {
+          context.beginPath();
+          if (typeof context.roundRect === "function") {
+            context.roundRect(x, y, width, height, radius);
+            return;
+          }
+          const r = Math.min(radius, width / 2, height / 2);
+          context.moveTo(x + r, y);
+          context.lineTo(x + width - r, y);
+          context.quadraticCurveTo(x + width, y, x + width, y + r);
+          context.lineTo(x + width, y + height - r);
+          context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+          context.lineTo(x + r, y + height);
+          context.quadraticCurveTo(x, y + height, x, y + height - r);
+          context.lineTo(x, y + r);
+          context.quadraticCurveTo(x, y, x + r, y);
+          context.closePath();
+        }
+
+        function drawCanvas(canvas, interactive) {
+          const geometry = makePath(canvas, interactive);
+          const { context, width, height } = geometry.size;
+          if (interactive) taskGeometry = geometry;
+          else previewGeometry = geometry;
+
+          context.clearRect(0, 0, width, height);
+          context.fillStyle = "#d8dce3";
+          context.fillRect(0, 0, width, height);
+
+          const visibleRange = getVisibleAlongRange(geometry);
+          drawCorridorSegment(context, geometry, visibleRange.start, geometry.startAreaEndAlong, "#e8f7ee", "#16794c");
+          drawCorridorSegment(context, geometry, geometry.startAreaEndAlong, geometry.endAreaStartAlong, "#eaf1ff", "#2f68c7");
+          drawCorridorSegment(context, geometry, geometry.endAreaStartAlong, visibleRange.end, "#fff2e3", "#c87300");
+
+          const startLabel = pointAlongPath(geometry, (visibleRange.start + geometry.startAreaEndAlong) / 2);
+          const endLabel = pointAlongPath(geometry, (geometry.endAreaStartAlong + visibleRange.end) / 2);
+          context.save();
+          context.font = "700 12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillStyle = "#16794c";
+          context.fillText("START", startLabel.x, startLabel.y);
+          context.fillStyle = "#9a6700";
+          context.fillText("END", endLabel.x, endLabel.y);
+          context.restore();
+
+          if (interactive && activeTrial && activeTrial.trajectory.length > 1) {
+            context.save();
+            context.lineCap = "round";
+            context.lineJoin = "round";
+            context.lineWidth = 1.5;
+            for (let index = 1; index < activeTrial.trajectory.length; index += 1) {
+              const previous = activeTrial.trajectory[index - 1];
+              const current = activeTrial.trajectory[index];
+              context.strokeStyle = current.outside ? "#d83b32" : "#172033";
+              context.beginPath();
+              context.moveTo(previous.x, previous.y);
+              context.lineTo(current.x, current.y);
+              context.stroke();
+            }
+            context.restore();
+          }
+
+          context.save();
+          context.fillStyle = "rgba(255,255,255,.92)";
+          context.strokeStyle = "#d8dee9";
+          context.lineWidth = 1;
+          roundedRectPath(context, 14, 14, 220, 86, 6);
+          context.fill();
+          context.stroke();
+          context.textAlign = "left";
+          context.textBaseline = "alphabetic";
+          context.fillStyle = "#172033";
+          context.font = "700 14px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+          context.fillText("CUSTOM 可変条件", 26, 40);
+          context.fillStyle = "#647086";
+          context.font = "12px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+          context.fillText(`A=${config.amplitude} / W=${config.width} / ID=${round(metrics.id, 3)}`, 26, 62);
+          context.fillText(interactive ? "表示: 実寸ピクセル" : `表示倍率 ${round(geometry.scale, 3)}`, 26, 82);
+          context.restore();
+        }
+
+        function updateAll() {
+          readConfig();
+          calculateMetrics();
+          updateText();
+          drawCanvas(elements.previewCanvas, false);
+          if (!elements.taskOverlay.hidden) drawCanvas(elements.taskCanvas, true);
+        }
+
+        function canvasPoint(event) {
+          const rect = elements.taskCanvas.getBoundingClientRect();
+          return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        }
+
+        function setMessage(text, tone) {
+          elements.taskMessage.className = `task-message${tone ? ` ${tone}` : ""}`;
+          elements.taskMessage.innerHTML = lastResult && tone === "success"
+            ? `<span>${text}</span><b>全体MT ${lastResult.movementTimeMs} ms · コアMT ${lastResult.coreMovementTimeMs ?? "—"} ms · 逸脱 ${lastResult.deviationCount} 回</b>`
+            : `<span>${text}</span>`;
+        }
+
+        function beginTask() {
+          elements.taskOverlay.hidden = false;
+          elements.taskParameterDock.classList.remove("is-open");
+          elements.taskParameterHandle.setAttribute("aria-expanded", "false");
+          document.body.style.overflow = "hidden";
+          lastResult = null;
+          activeTrial = null;
+          setMessage("STARTを押したまま、ENDまで移動してください", "");
+          drawCanvas(elements.taskCanvas, true);
+          if (!document.fullscreenElement && elements.taskOverlay.requestFullscreen) {
+            elements.taskOverlay.requestFullscreen().catch(() => {});
+          }
+        }
+
+        async function stopTask() {
+          activeTrial = null;
+          elements.taskOverlay.hidden = true;
+          document.body.style.overflow = "";
+          if (document.fullscreenElement === elements.taskOverlay && document.exitFullscreen) {
+            try { await document.exitFullscreen(); } catch (_) {}
+          }
+        }
+
+        function interpolateCrossing(previous, current, targetAlong) {
+          const delta = current.along - previous.along;
+          const ratio = delta === 0 ? 0 : clamp((targetAlong - previous.along) / delta, 0, 1);
+          return previous.elapsed + (current.elapsed - previous.elapsed) * ratio;
+        }
+
+        function recordCoreTiming(trial, point, elapsed) {
+          const current = { point, elapsed, along: pathCoordinates(point, trial.path).along };
+          const previous = trial.lastCoreSample;
+          if (!previous) {
+            trial.lastCoreSample = current;
+            return;
+          }
+          if (
+            trial.coreEntryMs === null &&
+            previous.along < trial.path.coreStartAlong &&
+            current.along >= trial.path.coreStartAlong
+          ) {
+            trial.coreEntryMs = Math.round(interpolateCrossing(previous, current, trial.path.coreStartAlong));
+          }
+          if (
+            trial.coreEntryMs !== null &&
+            trial.coreExitMs === null &&
+            previous.along < trial.path.coreEndAlong &&
+            current.along >= trial.path.coreEndAlong
+          ) {
+            trial.coreExitMs = Math.round(interpolateCrossing(previous, current, trial.path.coreEndAlong));
+            trial.coreMovementTimeMs = Math.max(0, trial.coreExitMs - trial.coreEntryMs);
+          }
+          trial.lastCoreSample = current;
+        }
+
+        function closeDeviationEvent(trial, point, elapsed) {
+          if (!trial.openDeviation) return;
+          const event = {
+            ...trial.openDeviation,
+            endMs: Math.round(elapsed),
+            endX: round(point.x, 1),
+            endY: round(point.y, 1)
+          };
+          event.durationMs = Math.max(0, event.endMs - event.startMs);
+          trial.deviationTotalMs += event.durationMs;
+          trial.deviationEvents.push(event);
+          trial.openDeviation = null;
+        }
+
+        function recordMove(point) {
+          const trial = activeTrial;
+          const elapsed = performance.now() - trial.startedAt;
+          recordCoreTiming(trial, point, elapsed);
+          const deviation = getCorridorDeviation(point, trial.path);
+          const outsidePx = round(deviation.outsidePx, 1);
+          trial.trajectory.push({
+            x: round(point.x, 1),
+            y: round(point.y, 1),
+            t: Math.round(elapsed),
+            outside: !deviation.inside,
+            outsidePx
+          });
+          if (!deviation.inside) {
+            trial.maxDeviationPx = Math.max(trial.maxDeviationPx, outsidePx);
+            if (outsidePx >= displaySettings.deviationThresholdPx) trial.excessiveDeviation = true;
+            if (!trial.openDeviation) {
+              trial.deviationCount += 1;
+              trial.openDeviation = {
+                startMs: Math.round(elapsed),
+                startX: round(point.x, 1),
+                startY: round(point.y, 1),
+                maxOutsidePx: outsidePx
+              };
+            } else {
+              trial.openDeviation.maxOutsidePx = Math.max(trial.openDeviation.maxOutsidePx, outsidePx);
+            }
+          } else if (trial.openDeviation) {
+            closeDeviationEvent(trial, point, elapsed);
+          }
+        }
+
+        elements.taskCanvas.addEventListener("pointerdown", (event) => {
+          if (!taskGeometry) return;
+          const point = canvasPoint(event);
+          if (!isInsideEndpointZone(point, taskGeometry, "start")) {
+            setMessage("START領域内から開始してください", "error");
+            return;
+          }
+          elements.taskCanvas.setPointerCapture(event.pointerId);
+          activeTrial = {
+            pointerId: event.pointerId,
+            startedAt: performance.now(),
+            path: taskGeometry,
+            coreEntryMs: null,
+            coreExitMs: null,
+            coreMovementTimeMs: null,
+            lastCoreSample: null,
+            deviationCount: 0,
+            deviationTotalMs: 0,
+            maxDeviationPx: 0,
+            excessiveDeviation: false,
+            deviationEvents: [],
+            openDeviation: null,
+            trajectory: [{ x: round(point.x, 1), y: round(point.y, 1), t: 0, outside: false, outsidePx: 0 }]
+          };
+          recordCoreTiming(activeTrial, point, 0);
+          setMessage("計測中 — 通路の中を通ってENDで離してください", "");
+          drawCanvas(elements.taskCanvas, true);
+        });
+
+        elements.taskCanvas.addEventListener("pointermove", (event) => {
+          if (!activeTrial || activeTrial.pointerId !== event.pointerId) return;
+          const point = canvasPoint(event);
+          recordMove(point);
+          drawCanvas(elements.taskCanvas, true);
+        });
+
+        elements.taskCanvas.addEventListener("pointerup", (event) => {
+          if (!activeTrial || activeTrial.pointerId !== event.pointerId) return;
+          const point = canvasPoint(event);
+          const trial = activeTrial;
+          const elapsed = performance.now() - trial.startedAt;
+          recordCoreTiming(trial, point, elapsed);
+          if (trial.openDeviation) closeDeviationEvent(trial, point, elapsed);
+          const success = isInsideEndpointZone(point, trial.path, "end");
+          const progress = getPathProgress(point, trial.path);
+          if (elements.taskCanvas.hasPointerCapture(event.pointerId)) elements.taskCanvas.releasePointerCapture(event.pointerId);
+          if (success) {
+            lastResult = {
+              movementTimeMs: Math.round(elapsed),
+              coreMovementTimeMs: trial.coreMovementTimeMs,
+              deviationCount: trial.deviationCount,
+              deviationTotalMs: Math.round(trial.deviationTotalMs),
+              maxDeviationPx: trial.maxDeviationPx,
+              excessiveDeviation: trial.excessiveDeviation,
+              trajectory: trial.trajectory,
+              deviationEvents: trial.deviationEvents
+            };
+            activeTrial = null;
+            setMessage("完了しました。STARTから再試行できます", "success");
+          } else if (progress >= displaySettings.nearGoalProgressThreshold) {
+            activeTrial = null;
+            lastResult = null;
+            setMessage("ゴール直前で離されました。分析対象エラーとして記録しました", "error");
+          } else {
+            activeTrial = null;
+            lastResult = null;
+            setMessage("ENDまで到達していません。STARTからやり直してください", "error");
+          }
+          drawCanvas(elements.taskCanvas, true);
+        });
+
+        elements.taskCanvas.addEventListener("pointercancel", () => {
+          activeTrial = null;
+          setMessage("試行をキャンセルしました", "error");
+          drawCanvas(elements.taskCanvas, true);
+        });
+
+        ids.forEach((id) => elements[id].addEventListener("input", updateAll));
+        Object.entries(runInputMap).forEach(([runId, mainId]) => {
+          elements[runId].addEventListener("input", () => {
+            if (activeTrial) {
+              if (elements.taskCanvas.hasPointerCapture(activeTrial.pointerId)) {
+                elements.taskCanvas.releasePointerCapture(activeTrial.pointerId);
+              }
+              activeTrial = null;
+              lastResult = null;
+            }
+            elements[mainId].value = elements[runId].value;
+            updateAll();
+            setMessage("パラメータを変更しました。START領域から開始してください", "");
+          });
+        });
+        document.querySelectorAll(".preset").forEach((button) => {
+          button.addEventListener("click", () => {
+            elements.amplitude.value = button.dataset.a;
+            elements.width.value = button.dataset.w;
+            updateAll();
+          });
+        });
+
+        elements.detectScreen.addEventListener("click", () => {
+          elements.screenWidth.value = window.screen.width;
+          elements.screenHeight.value = window.screen.height;
+          updateAll();
+        });
+
+        elements.startTask.addEventListener("click", beginTask);
+        elements.taskParameterHandle.addEventListener("click", () => {
+          const open = elements.taskParameterDock.classList.toggle("is-open");
+          elements.taskParameterHandle.setAttribute("aria-expanded", String(open));
+        });
+        elements.topFullscreen.addEventListener("click", async () => {
+          if (document.fullscreenElement) {
+            try { await document.exitFullscreen(); } catch (_) {}
+          } else if (elements.appShell.requestFullscreen) {
+            elements.appShell.requestFullscreen().catch(() => {});
+          }
+        });
+        elements.stopTask.addEventListener("click", stopTask);
+        elements.exitFullscreen.addEventListener("click", async () => {
+          if (document.fullscreenElement && document.exitFullscreen) {
+            try { await document.exitFullscreen(); } catch (_) {}
+          }
+        });
+        elements.returnFullscreen.addEventListener("click", () => {
+          if (!document.fullscreenElement && elements.taskOverlay.requestFullscreen) {
+            elements.taskOverlay.requestFullscreen().catch(() => {});
+          }
+        });
+
+        document.addEventListener("fullscreenchange", () => {
+          const fullscreen = Boolean(document.fullscreenElement);
+          elements.topFullscreen.textContent = fullscreen ? "全画面解除" : "全画面";
+          elements.returnFullscreen.hidden = fullscreen;
+          elements.exitFullscreen.disabled = !fullscreen;
+          if (!elements.taskOverlay.hidden) requestAnimationFrame(() => drawCanvas(elements.taskCanvas, true));
+        });
+
+        elements.exportConfig.addEventListener("click", () => {
+          const payload = {
+            appName: "直線ステアリング課題設定",
+            task: {
+              shape: "straight",
+              amplitude: config.amplitude,
+              width: config.width,
+              steeringId: round(metrics.id, 3),
+              angleDeg: config.angle,
+              movementAreaPx: displaySettings.movementAreaPx,
+              exactPixels: true
+            },
+            display: {
+              diagonalInches: config.diagonal,
+              screenWidthCssPx: config.screenWidth,
+              screenHeightCssPx: config.screenHeight,
+              pixelsPerInch: round(metrics.ppi, 3),
+              millimetersPerCssPixel: round(metrics.mmPerPx, 5)
+            },
+            physicalSize: {
+              amplitudeMm: round(metrics.amplitudeMm, 2),
+              widthMm: round(metrics.widthMm, 2)
+            }
+          };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = `steering_A${config.amplitude}_W${config.width}.json`;
+          anchor.click();
+          URL.revokeObjectURL(url);
+        });
+
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document.querySelectorAll(".tab").forEach((item) => {
+              item.classList.toggle("active", item === tab);
+            });
+            document.querySelectorAll(".tab-panel").forEach((panel) => {
+              panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+            });
+            requestAnimationFrame(() => drawCanvas(elements.previewCanvas, false));
+          });
+        });
+
+        new ResizeObserver(() => {
+          drawCanvas(elements.previewCanvas, false);
+          if (!elements.taskOverlay.hidden) drawCanvas(elements.taskCanvas, true);
+        }).observe(document.body);
+
+        loadConfig();
+        calculateMetrics();
+        updateText();
+        requestAnimationFrame(() => drawCanvas(elements.previewCanvas, false));
+      })();
+    </script>
+  </body>
+</html>

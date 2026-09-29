@@ -1081,6 +1081,24 @@
         .task-overlay .task-parameter-dock.is-dismissed:focus-within { transform: translateX(-250px); }
         .task-overlay .task-message { bottom: 8px; width: calc(100% - 24px); min-height: 52px; flex-direction: column; gap: 4px; }
       }
+      .calibration-controls p { margin: 8px 0; font-size: 11px; line-height: 1.6; }
+      .calibration-status { color: #21436f; font-size: 11px; font-weight: 700; line-height: 1.6; }
+      .calibration-controls button, .calibration-actions button { margin: 4px 6px 4px 0; padding: 9px 12px; border: 1px solid #b8c1d1; border-radius: 5px; background: #fff; color: #21436f; cursor: pointer; font: inherit; }
+      .calibration-dialog { box-sizing: border-box; width: 680px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; overflow: auto; border: 1px solid #b8c1d1; border-radius: 10px; background: #fff; color: #263044; font-size: 14px; }
+      .calibration-dialog::backdrop { background: rgba(23, 32, 51, .55); }
+      .calibration-dialog h2 { margin: 0 0 12px; font-size: 20px; }
+      .calibration-dialog p { margin: 12px 0; line-height: 1.65; }
+      .calibration-reference { padding: 24px 8px; }
+      .calibration-line { position: relative; width: 600px; max-width: 100%; height: 28px; margin: auto; }
+      .calibration-line span { position: absolute; top: 50%; right: 0; left: 0; height: 1px; background: #111; }
+      .calibration-line::before, .calibration-line::after { position: absolute; top: 0; width: 1px; height: 100%; background: #111; content: ""; transform: translateX(-50%); }
+      .calibration-line::before { left: 0; }
+      .calibration-line::after { left: 100%; }
+      .calibration-input { display: grid; gap: 8px; font-weight: 700; }
+      .calibration-input input { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; border: 1px solid #b8c1d1; border-radius: 5px; font: inherit; }
+      .calibration-error { color: #a83d30; }
+      .calibration-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+      .calibration-actions button[type="submit"] { color: #fff; background: #21436f; }
     </style>
   </head>
   <body>
@@ -1153,6 +1171,14 @@
               <h2>画面設定</h2>
               <p>使用するモニターの対角インチと、ブラウザ上の画面サイズを設定します。</p>
             </div>
+            <div class="control-card calibration-controls">
+              <h3>定規で実寸を校正</h3>
+              <p class="calibration-status" data-calibration-status role="status">未校正：画面設定からの推定値</p>
+              <p>基準線を定規で測ると、A・Wのmm表示を補正できます。px指定は変わりません。</p>
+              <button type="button" data-calibration-open>基準線を測って校正</button>
+              <button type="button" data-calibration-reset hidden>校正を解除</button>
+              <p>使用するモニターと表示倍率で校正してください。同じ解像度の別モニターへの移動は検出できない場合があります。</p>
+            </div>
             <div class="control-card">
               <label class="field full" for="diagonal">画面の対角サイズ
                 <span class="input-wrap"><input id="diagonal" type="number" min="5" max="100" step="0.1" value="24" /><b>inch</b></span>
@@ -1166,7 +1192,7 @@
                 </label>
               </div>
               <button id="detectScreen" class="detect-button" type="button">この画面のサイズを自動取得</button>
-              <p class="note">対角インチはモニター仕様の値を入力してください。縦横はブラウザが取得するCSS pxを使います。</p>
+              <p class="note">未校正時の推定に使用します。対角インチはモニター仕様、縦横はブラウザが取得するCSS pxを入力してください。</p>
             </div>
             <div class="control-card">
               <h3>算出した画面実寸</h3>
@@ -1190,9 +1216,8 @@
               <div class="measure-card"><span>1 CSS px</span><strong><output id="metricMmPx">—</output><small> mm</small></strong></div>
             </div>
             <div class="calculation">
-              <b>計算方法</b><br />
-              PPI = √(画面横² + 画面縦²) ÷ 対角インチ<br />
-              mm/px = 25.4 ÷ PPI<br />
+              <b data-calibration-status>未校正：画面設定からの推定値</b><br />
+              <span id="conversionFormula">mm/px = 25.4 × 対角インチ ÷ √(画面横² + 画面縦²)</span><br />
               A実寸 = A × mm/px ／ W実寸 = W × mm/px
             </div>
           </section>
@@ -1300,6 +1325,14 @@
             <div class="route-total"><span>経路合計</span><b><output id="runRouteTotal">1450</output> px</b></div>
           </div>
           <div class="parameter-tab-panel" data-parameter-panel="screen" hidden>
+            <div class="control-card calibration-controls">
+              <h3>定規で実寸を校正</h3>
+              <p class="calibration-status" data-calibration-status role="status">未校正：画面設定からの推定値</p>
+              <p>基準線を定規で測ると、A・Wのmm表示を補正できます。px指定は変わりません。</p>
+              <button type="button" data-calibration-open>基準線を測って校正</button>
+              <button type="button" data-calibration-reset hidden>校正を解除</button>
+              <p>使用するモニターと表示倍率で校正してください。同じ解像度の別モニターへの移動は検出できない場合があります。</p>
+            </div>
             <div class="control-card">
               <h3>画面設定</h3>
             <label class="field full" for="runDiagonal">対角サイズ
@@ -1307,14 +1340,17 @@
             </label>
             <div class="field-grid">
               <label class="field" for="runScreenWidth">画面の横
-                <span class="input-wrap"><input id="runScreenWidth" type="number" min="320" max="10000" step="1" value="1920" /><b>px</b></span>
+                <span class="input-wrap"><input id="runScreenWidth" type="number" min="320" max="10000" step="1" value="1920" /><b>CSS px</b></span>
               </label>
               <label class="field" for="runScreenHeight">画面の縦
-                <span class="input-wrap"><input id="runScreenHeight" type="number" min="240" max="10000" step="1" value="1080" /><b>px</b></span>
+                <span class="input-wrap"><input id="runScreenHeight" type="number" min="240" max="10000" step="1" value="1080" /><b>CSS px</b></span>
               </label>
             </div>
+            <button id="runDetectScreen" class="detect-button" type="button">この画面のサイズを自動取得</button>
+            <p class="note">未校正時の推定に使用します。</p>
             </div>
           </div>
+          <p class="calibration-status" data-calibration-status role="status">未校正：画面設定からの推定値</p>
           <div class="run-actuals" aria-label="現在の実寸値">
             <div><span>A実寸</span><b><output id="runActualA">—</output> mm</b></div>
             <div><span>W実寸</span><b><output id="runActualW">—</output> mm</b></div>
@@ -1329,6 +1365,17 @@
       <div id="taskMessage" class="task-message" role="status" aria-live="polite">
         START領域内で押して、END領域内でポインタを離してください。
       </div>
+      <dialog id="calibrationDialog" class="calibration-dialog" aria-labelledby="calibrationTitle">
+        <form id="calibrationForm">
+          <h2 id="calibrationTitle">定規で実寸を校正</h2>
+          <p>左右の縦線の中心間を、画面に当てた定規で測ってください。測定中はウィンドウサイズ・ズームを変えないでください。</p>
+          <div class="calibration-reference"><div id="calibrationLine" class="calibration-line"><span></span></div></div>
+          <label class="calibration-input" for="calibrationMm">測った長さ（mm）<input id="calibrationMm" type="number" min="0.01" step="any" required /></label>
+          <p id="calibrationError" class="calibration-error" role="alert"></p>
+          <p>例：15.2 cmなら152 mm。保存後は同じ表示環境で校正値を使用します。精度は定規の読み取り精度に依存します。</p>
+          <div class="calibration-actions"><button id="calibrationCancel" type="button">キャンセル</button><button type="submit">校正を保存</button></div>
+        </form>
+      </dialog>
     </section>
 
     <script>
@@ -1345,7 +1392,8 @@
           endBufferPx: 200,
           diagonal: 24,
           screenWidth: 1920,
-          screenHeight: 1080
+          screenHeight: 1080,
+          calibration: null
         };
         const displaySettings = Object.freeze({
           marginPx: 88,
@@ -1374,7 +1422,9 @@
             "taskParameterDock", "taskParameterHandle", "closeTaskParameters",
             ...Object.keys(runInputMap), "runStartBuffer", "runEndBuffer", "runAngleValue",
             "runStartBufferSummary", "runStartBufferMm", "runCoreSummary", "runEndBufferSummary",
-            "runEndBufferMm", "runRouteTotal", "runActualA", "runActualW", "runActualId", "runMmPerPx"
+            "runEndBufferMm", "runRouteTotal", "runActualA", "runActualW", "runActualId", "runMmPerPx",
+            "runDetectScreen", "calibrationDialog", "calibrationForm", "calibrationLine", "calibrationMm",
+            "calibrationError", "calibrationCancel", "conversionFormula"
           ].map((id) => [id, document.getElementById(id)])
         );
 
@@ -1384,6 +1434,8 @@
         let taskGeometry = null;
         let activeTrial = null;
         let lastResult = null;
+        let environment = readEnvironment();
+        let calibrationSession = null;
         elements.appShell.append(elements.taskOverlay);
 
         const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -1395,6 +1447,32 @@
           const factor = 10 ** digits;
           return Math.round(value * factor) / factor;
         };
+
+        function readEnvironment() {
+          return {
+            screenWidth: window.screen.width,
+            screenHeight: window.screen.height,
+            pixelRatio: window.devicePixelRatio || 1,
+            viewportScale: window.visualViewport?.scale || 1
+          };
+        }
+
+        function sameEnvironment(left, right) {
+          return Boolean(left && right && ["screenWidth", "screenHeight", "pixelRatio", "viewportScale"].every((key) =>
+            Number.isFinite(left[key]) && left[key] > 0 && Number.isFinite(right[key]) && Math.abs(left[key] - right[key]) < 0.000001
+          ));
+        }
+
+        function calibrationScale(calibration, environment) {
+          if (!calibration || !sameEnvironment(calibration.environment, environment)) return null;
+          const { measuredMm, lineCssPx } = calibration;
+          const scale = measuredMm / lineCssPx;
+          return Number.isFinite(measuredMm) && measuredMm > 0 && Number.isFinite(lineCssPx) && lineCssPx > 0 && Number.isFinite(scale) && scale > 0 ? scale : null;
+        }
+
+        function referenceMatches(reference, lineCssPx, environment) {
+          return Boolean(reference && lineCssPx > 0 && Math.abs(reference.lineCssPx - lineCssPx) < 0.01 && sameEnvironment(reference.environment, environment));
+        }
 
         function loadConfig() {
           try {
@@ -1410,7 +1488,8 @@
                 endBufferPx: stored.endBufferPx ?? defaults.endBufferPx,
                 diagonal: stored.screenDiagonalIn ?? stored.diagonal ?? defaults.diagonal,
                 screenWidth: stored.screenWidthPx ?? stored.screenWidth ?? defaults.screenWidth,
-                screenHeight: stored.screenHeightPx ?? stored.screenHeight ?? defaults.screenHeight
+                screenHeight: stored.screenHeightPx ?? stored.screenHeight ?? defaults.screenHeight,
+                calibration: stored.calibration ?? null
               };
             }
             else if (window.screen.width && window.screen.height) {
@@ -1433,7 +1512,8 @@
             endBufferPx: clamp(numberOr(elements.runEndBuffer.value, config.endBufferPx), 0, 2000),
             diagonal: clamp(numberOr(elements.diagonal.value, defaults.diagonal), 5, 100),
             screenWidth: clamp(numberOr(elements.screenWidth.value, defaults.screenWidth), 320, 10000),
-            screenHeight: clamp(numberOr(elements.screenHeight.value, defaults.screenHeight), 240, 10000)
+            screenHeight: clamp(numberOr(elements.screenHeight.value, defaults.screenHeight), 240, 10000),
+            calibration: config.calibration
           };
           ids.forEach((id) => { elements[id].value = config[id]; });
           try {
@@ -1445,15 +1525,20 @@
               endBufferPx: config.endBufferPx,
               screenDiagonalIn: config.diagonal,
               screenWidthPx: config.screenWidth,
-              screenHeightPx: config.screenHeight
+              screenHeightPx: config.screenHeight,
+              calibration: config.calibration
             }));
           } catch (_) {}
         }
 
         function calculateMetrics() {
           const diagonalPx = Math.hypot(config.screenWidth, config.screenHeight);
-          const ppi = diagonalPx / config.diagonal;
-          const mmPerPx = 25.4 / ppi;
+          const estimatedPpi = diagonalPx / config.diagonal;
+          const calibratedScale = calibrationScale(config.calibration, environment);
+          const mmPerPx = calibratedScale ?? 25.4 / estimatedPpi;
+          const ppi = 25.4 / mmPerPx;
+          const screenWidth = calibratedScale !== null ? environment.screenWidth : config.screenWidth;
+          const screenHeight = calibratedScale !== null ? environment.screenHeight : config.screenHeight;
           const id = config.amplitude / config.width;
           const radians = config.angle * Math.PI / 180;
           const totalLength = config.amplitude + config.startBufferPx + config.endBufferPx;
@@ -1464,22 +1549,29 @@
           metrics = {
             ppi,
             mmPerPx,
+            calibrated: calibratedScale !== null,
+            screenWidthCssPx: screenWidth,
+            screenHeightCssPx: screenHeight,
             id,
             amplitudeMm: config.amplitude * mmPerPx,
             widthMm: config.width * mmPerPx,
             startBufferMm: config.startBufferPx * mmPerPx,
             endBufferMm: config.endBufferPx * mmPerPx,
             totalRoutePx: totalLength,
-            screenWidthMm: config.screenWidth * mmPerPx,
-            screenHeightMm: config.screenHeight * mmPerPx,
-            screenDiagonalMm: config.diagonal * 25.4,
+            screenWidthMm: screenWidth * mmPerPx,
+            screenHeightMm: screenHeight * mmPerPx,
+            screenDiagonalMm: Math.hypot(screenWidth, screenHeight) * mmPerPx,
             requiredWidth,
             requiredHeight,
-            fits: requiredWidth <= config.screenWidth && requiredHeight <= config.screenHeight
+            fits: requiredWidth <= screenWidth && requiredHeight <= screenHeight
           };
         }
 
         function updateText() {
+          const label = metrics.calibrated ? "実測校正済み" : config.calibration ? "要再校正：画面・倍率を確認してください（現在は推定値）" : "未校正：画面設定からの推定値";
+          document.querySelectorAll("[data-calibration-status]").forEach((item) => { item.textContent = label; });
+          document.querySelectorAll("[data-calibration-reset]").forEach((button) => { button.hidden = !config.calibration; });
+          elements.conversionFormula.textContent = metrics.calibrated ? "mm/px = 基準線の実測mm ÷ 基準線のCSS px" : "mm/px = 25.4 × 対角インチ ÷ √(画面横² + 画面縦²)";
           elements.metricA.textContent = config.amplitude;
           elements.metricW.textContent = config.width;
           elements.metricAMm.textContent = round(metrics.amplitudeMm, 1);
@@ -1502,7 +1594,7 @@
           elements.runW.textContent = `W ${config.width}px`;
           elements.runId.textContent = `ID ${round(metrics.id, 3)}`;
           elements.runBuffer.textContent = `BUFFER ${config.startBufferPx} / ${config.endBufferPx}px`;
-          elements.runMm.textContent = `${round(metrics.amplitudeMm, 1)} × ${round(metrics.widthMm, 1)} mm`;
+          elements.runMm.textContent = `${round(metrics.amplitudeMm, 1)} × ${round(metrics.widthMm, 1)} mm（${metrics.calibrated ? "校正済" : "推定"}）`;
           Object.entries(runInputMap).forEach(([runId, mainId]) => {
             if (document.activeElement !== elements[runId]) elements[runId].value = config[mainId];
           });
@@ -2024,11 +2116,70 @@
           });
         });
 
-        elements.detectScreen.addEventListener("click", () => {
+        [elements.detectScreen, elements.runDetectScreen].forEach((button) => button.addEventListener("click", () => {
           elements.screenWidth.value = window.screen.width;
           elements.screenHeight.value = window.screen.height;
           updateAll();
+        }));
+
+        function checkDisplay() {
+          const next = readEnvironment();
+          if (!sameEnvironment(environment, next)) {
+            environment = next;
+            calculateMetrics();
+            updateText();
+          }
+          if (!elements.calibrationDialog.open || !calibrationSession) return;
+          const lineCssPx = elements.calibrationLine.getBoundingClientRect().width;
+          if (!referenceMatches(calibrationSession, lineCssPx, next)) {
+            calibrationSession = { lineCssPx, environment: next };
+            elements.calibrationMm.value = "";
+            elements.calibrationError.textContent = "表示サイズ・倍率が変わりました。現在の基準線をもう一度測ってください。";
+          }
+        }
+
+        document.querySelectorAll("[data-calibration-open]").forEach((button) => button.addEventListener("click", () => {
+          cancelTrialForParameterChange();
+          drawCanvas(elements.taskCanvas, true);
+          setMessage("校正後はSTART領域から開始してください。", "changed");
+          elements.calibrationMm.value = "";
+          elements.calibrationError.textContent = "";
+          elements.calibrationDialog.showModal();
+          calibrationSession = {
+            lineCssPx: elements.calibrationLine.getBoundingClientRect().width,
+            environment: readEnvironment()
+          };
+        }));
+        document.querySelectorAll("[data-calibration-reset]").forEach((button) => button.addEventListener("click", () => {
+          cancelTrialForParameterChange();
+          config.calibration = null;
+          updateAll();
+          setMessage("校正を解除しました。mm表示は画面設定からの推定値です。", "changed");
+        }));
+        elements.calibrationForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const next = readEnvironment();
+          const lineCssPx = elements.calibrationLine.getBoundingClientRect().width;
+          if (!referenceMatches(calibrationSession, lineCssPx, next)) {
+            checkDisplay();
+            return;
+          }
+          const calibration = { lineCssPx, measuredMm: Number(elements.calibrationMm.value), environment: next, calibratedAt: new Date().toISOString() };
+          if (elements.calibrationMm.value.trim() === "" || calibrationScale(calibration, next) === null) {
+            elements.calibrationError.textContent = "定規で測った長さを、0より大きいmmの数値で入力してください。";
+            return;
+          }
+          environment = next;
+          config.calibration = calibration;
+          updateAll();
+          elements.calibrationDialog.close();
         });
+        elements.calibrationCancel.addEventListener("click", () => elements.calibrationDialog.close());
+        elements.calibrationDialog.addEventListener("close", () => { calibrationSession = null; });
+        window.addEventListener("resize", checkDisplay);
+        window.addEventListener("focus", checkDisplay);
+        window.visualViewport?.addEventListener("resize", checkDisplay);
+        window.setInterval(checkDisplay, 1000);
 
         elements.startTask.addEventListener("click", beginTask);
         elements.taskParameterHandle.addEventListener("click", (event) => {
@@ -2090,10 +2241,12 @@
             },
             display: {
               diagonalInches: config.diagonal,
-              screenWidthCssPx: config.screenWidth,
-              screenHeightCssPx: config.screenHeight,
+              screenWidthCssPx: metrics.screenWidthCssPx,
+              screenHeightCssPx: metrics.screenHeightCssPx,
               pixelsPerInch: round(metrics.ppi, 3),
-              millimetersPerCssPixel: round(metrics.mmPerPx, 5)
+              millimetersPerCssPixel: round(metrics.mmPerPx, 5),
+              measurementSource: metrics.calibrated ? "ruler" : "estimated",
+              calibration: config.calibration
             },
             physicalSize: {
               amplitudeMm: round(metrics.amplitudeMm, 2),

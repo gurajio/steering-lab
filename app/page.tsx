@@ -4,6 +4,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Point = { x: number; y: number };
 
+type DisplayEnvironment = {
+  screenWidth: number;
+  screenHeight: number;
+  pixelRatio: number;
+  viewportScale: number;
+};
+
+type Calibration = {
+  lineCssPx: number;
+  measuredMm: number;
+  environment: DisplayEnvironment;
+  calibratedAt: string;
+};
+
 type ExperimentConfig = {
   amplitudePx: number;
   widthPx: number;
@@ -13,6 +27,7 @@ type ExperimentConfig = {
   screenDiagonalIn: number;
   screenWidthPx: number;
   screenHeightPx: number;
+  calibration: Calibration | null;
 };
 
 type TaskStatus =
@@ -101,6 +116,7 @@ const DEFAULT_CONFIG: ExperimentConfig = {
   screenDiagonalIn: 24,
   screenWidthPx: 1920,
   screenHeightPx: 1080,
+  calibration: null,
 };
 
 const DISPLAY = Object.freeze({
@@ -119,6 +135,43 @@ function clamp(value: number, min: number, max: number) {
 function round(value: number, digits = 2) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
+}
+
+function readEnvironment(): DisplayEnvironment {
+  return {
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    pixelRatio: window.devicePixelRatio || 1,
+    viewportScale: window.visualViewport?.scale || 1,
+  };
+}
+
+function sameEnvironment(left: DisplayEnvironment | null, right: DisplayEnvironment | null) {
+  return Boolean(left && right && (["screenWidth", "screenHeight", "pixelRatio", "viewportScale"] as const).every((key) =>
+    Number.isFinite(left[key]) && left[key] > 0 && Number.isFinite(right[key]) && Math.abs(left[key] - right[key]) < 0.000001,
+  ));
+}
+
+function calibrationScale(calibration: Calibration | null, environment: DisplayEnvironment | null) {
+  if (!calibration || !sameEnvironment(calibration.environment, environment)) return null;
+  const { measuredMm, lineCssPx } = calibration;
+  const scale = measuredMm / lineCssPx;
+  return Number.isFinite(measuredMm) && measuredMm > 0 && Number.isFinite(lineCssPx) && lineCssPx > 0 && Number.isFinite(scale) && scale > 0 ? scale : null;
+}
+
+function referenceMatches(reference: { lineCssPx: number; environment: DisplayEnvironment } | null, lineCssPx: number, environment: DisplayEnvironment) {
+  return Boolean(reference && lineCssPx > 0 && Math.abs(reference.lineCssPx - lineCssPx) < 0.01 && sameEnvironment(reference.environment, environment));
+}
+
+function CalibrationControls({ label, saved, onOpen, onReset }: { label: string; saved: boolean; onOpen: () => void; onReset: () => void }) {
+  return <div className="control-card calibration-controls">
+    <h3>定規で実寸を校正</h3>
+    <p className="calibration-status" role="status">{label}</p>
+    <p>基準線を定規で測ると、A・Wのmm表示を補正できます。px指定は変わりません。</p>
+    <button type="button" onClick={onOpen}>基準線を測って校正</button>
+    {saved && <button type="button" onClick={onReset}>校正を解除</button>}
+    <p>使用するモニターと表示倍率で校正してください。同じ解像度の別モニターへの移動は検出できない場合があります。</p>
+  </div>;
 }
 
 function statusMessage(status: TaskStatus) {
@@ -695,8 +748,41 @@ export default function Home() {
   const [taskStatus, setTaskStatus] = useState<TaskStatus>("ready");
   const [lastResult, setLastResult] = useState<TrialResult | null>(null);
   const [trialResetKey, setTrialResetKey] = useState(0);
+  const [environment, setEnvironment] = useState<DisplayEnvironment | null>(null);
+  const [calibrationDraft, setCalibrationDraft] = useState("");
+  const [calibrationError, setCalibrationError] = useState("");
   const appShellRef = useRef<HTMLElement>(null);
   const taskSurfaceRef = useRef<HTMLDivElement>(null);
+  const calibrationDialogRef = useRef<HTMLDialogElement>(null);
+  const calibrationLineRef = useRef<HTMLDivElement>(null);
+  const calibrationSession = useRef<{ lineCssPx: number; environment: DisplayEnvironment } | null>(null);
+
+  const checkDisplay = useCallback(() => {
+    const next = readEnvironment();
+    setEnvironment((current) => sameEnvironment(current, next) ? current : next);
+    if (!calibrationDialogRef.current?.open || !calibrationSession.current) return;
+    const lineCssPx = calibrationLineRef.current?.getBoundingClientRect().width ?? 0;
+    if (!referenceMatches(calibrationSession.current, lineCssPx, next)) {
+      calibrationSession.current = { lineCssPx, environment: next };
+      setCalibrationDraft("");
+      setCalibrationError("表示サイズ・倍率が変わりました。現在の基準線をもう一度測ってください。");
+    }
+  }, []);
+
+  useEffect(() => {
+    const initial = window.setTimeout(checkDisplay, 0);
+    const timer = window.setInterval(checkDisplay, 1000);
+    window.addEventListener("resize", checkDisplay);
+    window.addEventListener("focus", checkDisplay);
+    window.visualViewport?.addEventListener("resize", checkDisplay);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+      window.removeEventListener("resize", checkDisplay);
+      window.removeEventListener("focus", checkDisplay);
+      window.visualViewport?.removeEventListener("resize", checkDisplay);
+    };
+  }, [checkDisplay]);
 
   useEffect(() => {
     try {
@@ -733,8 +819,12 @@ export default function Home() {
 
   const metrics = useMemo(() => {
     const diagonalPx = Math.hypot(config.screenWidthPx, config.screenHeightPx);
-    const pixelsPerInch = diagonalPx / Math.max(config.screenDiagonalIn, 0.1);
-    const mmPerPx = 25.4 / pixelsPerInch;
+    const estimatedPpi = diagonalPx / Math.max(config.screenDiagonalIn, 0.1);
+    const calibratedScale = calibrationScale(config.calibration, environment);
+    const mmPerPx = calibratedScale ?? 25.4 / estimatedPpi;
+    const pixelsPerInch = 25.4 / mmPerPx;
+    const screenWidth = calibratedScale !== null && environment ? environment.screenWidth : config.screenWidthPx;
+    const screenHeight = calibratedScale !== null && environment ? environment.screenHeight : config.screenHeightPx;
     const steeringId = config.amplitudePx / Math.max(config.widthPx, 0.1);
     const angle = (config.angleDeg * Math.PI) / 180;
     const totalLength = config.amplitudePx + config.startBufferPx + config.endBufferPx;
@@ -743,20 +833,25 @@ export default function Home() {
     return {
       pixelsPerInch,
       mmPerPx,
+      calibrated: calibratedScale !== null,
+      screenWidthCssPx: screenWidth,
+      screenHeightCssPx: screenHeight,
       steeringId,
       amplitudeMm: config.amplitudePx * mmPerPx,
       widthMm: config.widthPx * mmPerPx,
       startBufferMm: config.startBufferPx * mmPerPx,
       endBufferMm: config.endBufferPx * mmPerPx,
       totalRoutePx: totalLength,
-      screenWidthMm: config.screenWidthPx * mmPerPx,
-      screenHeightMm: config.screenHeightPx * mmPerPx,
-      screenDiagonalMm: config.screenDiagonalIn * 25.4,
-      fitsScreen: requiredWidth <= config.screenWidthPx && requiredHeight <= config.screenHeightPx,
+      screenWidthMm: screenWidth * mmPerPx,
+      screenHeightMm: screenHeight * mmPerPx,
+      screenDiagonalMm: Math.hypot(screenWidth, screenHeight) * mmPerPx,
+      fitsScreen: requiredWidth <= screenWidth && requiredHeight <= screenHeight,
       requiredWidth: Math.ceil(requiredWidth),
       requiredHeight: Math.ceil(requiredHeight),
     };
-  }, [config]);
+  }, [config, environment]);
+
+  const calibrationLabel = metrics.calibrated ? "実測校正済み" : config.calibration ? "要再校正：画面・倍率を確認してください（現在は推定値）" : "未校正：画面設定からの推定値";
 
   const updateConfig = useCallback((updates: Partial<ExperimentConfig>) => {
     setConfig((current) => ({ ...current, ...updates }));
@@ -801,6 +896,34 @@ export default function Home() {
     setTrialResetKey((key) => key + 1);
   };
 
+  const openCalibration = () => {
+    resetTrial();
+    setCalibrationDraft("");
+    setCalibrationError("");
+    calibrationDialogRef.current?.showModal();
+    calibrationSession.current = {
+      lineCssPx: calibrationLineRef.current?.getBoundingClientRect().width ?? 0,
+      environment: readEnvironment(),
+    };
+  };
+
+  const applyCalibration = () => {
+    const next = readEnvironment();
+    const lineCssPx = calibrationLineRef.current?.getBoundingClientRect().width ?? 0;
+    if (!referenceMatches(calibrationSession.current, lineCssPx, next)) {
+      checkDisplay();
+      return;
+    }
+    const calibration = { lineCssPx, measuredMm: Number(calibrationDraft), environment: next, calibratedAt: new Date().toISOString() };
+    if (calibrationDraft.trim() === "" || calibrationScale(calibration, next) === null) {
+      setCalibrationError("定規で測った長さを、0より大きいmmの数値で入力してください。");
+      return;
+    }
+    setEnvironment(next);
+    updateConfig({ calibration });
+    calibrationDialogRef.current?.close();
+  };
+
   const exportConfig = () => {
     const payload = {
       appName: "直線ステアリング課題設定",
@@ -816,10 +939,12 @@ export default function Home() {
       },
       display: {
         diagonalInches: config.screenDiagonalIn,
-        screenWidthCssPx: config.screenWidthPx,
-        screenHeightCssPx: config.screenHeightPx,
+        screenWidthCssPx: metrics.screenWidthCssPx,
+        screenHeightCssPx: metrics.screenHeightCssPx,
         pixelsPerInch: round(metrics.pixelsPerInch, 3),
         millimetersPerCssPixel: round(metrics.mmPerPx, 5),
+        measurementSource: metrics.calibrated ? "ruler" : "estimated",
+        calibration: config.calibration,
       },
       physicalSize: { amplitudeMm: round(metrics.amplitudeMm, 2), widthMm: round(metrics.widthMm, 2) },
     };
@@ -894,6 +1019,7 @@ export default function Home() {
           {activeTab === "screen" && (
             <section className="tab-panel">
               <div className="panel-title"><h2>画面設定</h2><p>使用するモニターの対角インチとブラウザ上の画面サイズを設定します。</p></div>
+              <CalibrationControls label={calibrationLabel} saved={Boolean(config.calibration)} onOpen={openCalibration} onReset={() => updateConfig({ calibration: null })} />
               <div className="control-card field-stack">
                 <NumberField id="diagonal" label="画面の対角サイズ" value={config.screenDiagonalIn} unit="inch" min={5} max={100} step={0.1} onChange={(value) => setValue("screenDiagonalIn", value)} />
                 <div className="field-grid">
@@ -901,7 +1027,7 @@ export default function Home() {
                   <NumberField id="screen-height" label="画面の縦" value={config.screenHeightPx} unit="CSS px" min={240} max={10000} onChange={(value) => setValue("screenHeightPx", value)} />
                 </div>
                 <button className="text-button" type="button" onClick={useDetectedScreen}>この画面のサイズを自動取得</button>
-                <p className="calibration-note">対角インチはモニター仕様の値を入力してください。縦横はブラウザが取得するCSS pxを使います。</p>
+                <p className="calibration-note">未校正時の推定に使用します。対角インチはモニター仕様、縦横はブラウザが取得するCSS pxを入力してください。</p>
               </div>
               <div className="control-card"><h3>算出した画面実寸</h3><div className="screen-size">
                 <div><span>画面横</span><b>{round(metrics.screenWidthMm, 1)} mm</b></div>
@@ -920,7 +1046,7 @@ export default function Home() {
                 <div className="measure-card"><span>STEERING ID · A / W</span><strong>{round(metrics.steeringId, 3)}</strong></div>
                 <div className="measure-card"><span>1 CSS px</span><strong>{round(metrics.mmPerPx, 3)}<small> mm</small></strong></div>
               </div>
-              <div className="calculation"><b>計算方法</b><br />PPI = √(画面横² + 画面縦²) ÷ 対角インチ<br />mm/px = 25.4 ÷ PPI<br />A実寸 = A × mm/px ／ W実寸 = W × mm/px</div>
+              <div className="calculation"><b>{calibrationLabel}</b><br />{metrics.calibrated ? "mm/px = 基準線の実測mm ÷ 基準線のCSS px" : "mm/px = 25.4 × 対角インチ ÷ √(画面横² + 画面縦²)"}<br />A実寸 = A × mm/px ／ W実寸 = W × mm/px</div>
             </section>
           )}
         </aside>
@@ -947,7 +1073,7 @@ export default function Home() {
 
       <div ref={taskSurfaceRef} className="task-surface is-visible">
         <div className="task-toolbar">
-          <div className="task-readout"><span>STRAIGHT TASK</span><b>A {config.amplitudePx}px</b><b>W {config.widthPx}px</b><b>ID {round(metrics.steeringId, 3)}</b><b>BUFFER {config.startBufferPx} / {config.endBufferPx}px</b><b>{round(metrics.amplitudeMm, 1)} × {round(metrics.widthMm, 1)} mm</b></div>
+          <div className="task-readout"><span>STRAIGHT TASK</span><b>A {config.amplitudePx}px</b><b>W {config.widthPx}px</b><b>ID {round(metrics.steeringId, 3)}</b><b>BUFFER {config.startBufferPx} / {config.endBufferPx}px</b><b>{round(metrics.amplitudeMm, 1)} × {round(metrics.widthMm, 1)} mm（{metrics.calibrated ? "校正済" : "推定"}）</b></div>
           <div className="task-actions">
             {!fullscreen && <button type="button" onClick={enterTaskFullscreen}>ブラウザ全画面</button>}
             <button type="button" onClick={() => void leaveFullscreen()} disabled={!fullscreen}>全画面解除</button>
@@ -1013,15 +1139,19 @@ export default function Home() {
               </div>}
 
               {parameterTab === "screen" && <div role="tabpanel" className="parameter-tab-panel">
+                <CalibrationControls label={calibrationLabel} saved={Boolean(config.calibration)} onOpen={openCalibration} onReset={() => updateConfig({ calibration: null })} />
                 <div className="control-card field-stack">
                   <h3>画面設定</h3>
                   <NumberField id="run-diagonal" label="対角サイズ" value={config.screenDiagonalIn} unit="inch" min={5} max={100} step={0.1} onChange={(value) => setValue("screenDiagonalIn", value)} />
                   <div className="field-grid">
-                    <NumberField id="run-screen-width" label="画面の横" value={config.screenWidthPx} unit="px" min={320} max={10000} onChange={(value) => setValue("screenWidthPx", value)} />
-                    <NumberField id="run-screen-height" label="画面の縦" value={config.screenHeightPx} unit="px" min={240} max={10000} onChange={(value) => setValue("screenHeightPx", value)} />
+                    <NumberField id="run-screen-width" label="画面の横" value={config.screenWidthPx} unit="CSS px" min={320} max={10000} onChange={(value) => setValue("screenWidthPx", value)} />
+                    <NumberField id="run-screen-height" label="画面の縦" value={config.screenHeightPx} unit="CSS px" min={240} max={10000} onChange={(value) => setValue("screenHeightPx", value)} />
                   </div>
+                  <button className="text-button" type="button" onClick={useDetectedScreen}>この画面のサイズを自動取得</button>
+                  <p className="calibration-note">未校正時の推定に使用します。</p>
                 </div>
               </div>}
+              <p className="calibration-status" role="status">{calibrationLabel}</p>
               <div className="run-actuals">
                 <div><span>A実寸</span><b>{round(metrics.amplitudeMm, 2)} mm</b></div><div><span>W実寸</span><b>{round(metrics.widthMm, 2)} mm</b></div><div><span>ID = A / W</span><b>{round(metrics.steeringId, 3)}</b></div><div><span>1 CSS px</span><b>{round(metrics.mmPerPx, 3)} mm</b></div>
               </div>
@@ -1052,6 +1182,17 @@ export default function Home() {
           <span>{statusMessage(taskStatus)}</span>
           {lastResult && <b>全体MT {lastResult.movementTimeMs} ms · コアMT {lastResult.coreMovementTimeMs ?? "—"} ms · 逸脱 {lastResult.deviationCount} 回</b>}
         </div>
+        <dialog ref={calibrationDialogRef} className="calibration-dialog" aria-labelledby="calibration-title" onClose={() => { calibrationSession.current = null; }}>
+          <form onSubmit={(event) => { event.preventDefault(); applyCalibration(); }}>
+            <h2 id="calibration-title">定規で実寸を校正</h2>
+            <p>左右の縦線の中心間を、画面に当てた定規で測ってください。測定中はウィンドウサイズ・ズームを変えないでください。</p>
+            <div className="calibration-reference"><div ref={calibrationLineRef} className="calibration-line"><span /></div></div>
+            <label className="calibration-input" htmlFor="calibration-mm">測った長さ（mm）<input id="calibration-mm" type="number" min="0.01" step="any" required value={calibrationDraft} onChange={(event) => setCalibrationDraft(event.target.value)} /></label>
+            <p className="calibration-error" role="alert">{calibrationError}</p>
+            <p>例：15.2 cmなら152 mm。保存後は同じ表示環境で校正値を使用します。精度は定規の読み取り精度に依存します。</p>
+            <div className="calibration-actions"><button type="button" onClick={() => calibrationDialogRef.current?.close()}>キャンセル</button><button type="submit">校正を保存</button></div>
+          </form>
+        </dialog>
       </div>
     </main>
   );

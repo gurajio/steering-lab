@@ -525,6 +525,25 @@ input:focus-visible {
 .run-actuals span { display: block; color: var(--muted); font-size: 9px; font-weight: 700; }
 .run-actuals b { display: block; margin-top: 4px; font: 750 12px/1 var(--font-mono), monospace; }
 
+.calibration-controls p { margin: 8px 0; font-size: 11px; line-height: 1.6; }
+.calibration-status { color: #21436f; font-size: 11px; font-weight: 700; line-height: 1.6; }
+.calibration-controls button, .calibration-actions button { margin: 4px 6px 4px 0; padding: 9px 12px; border: 1px solid #b8c1d1; border-radius: 5px; background: #fff; color: #21436f; cursor: pointer; font: inherit; }
+.calibration-dialog { box-sizing: border-box; width: 680px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; overflow: auto; border: 1px solid #b8c1d1; border-radius: 10px; background: #fff; color: #263044; font-size: 14px; }
+.calibration-dialog::backdrop { background: rgba(23, 32, 51, .55); }
+.calibration-dialog h2 { margin: 0 0 12px; font-size: 20px; }
+.calibration-dialog p { margin: 12px 0; line-height: 1.65; }
+.calibration-reference { padding: 24px 8px; }
+.calibration-line { position: relative; width: 600px; max-width: 100%; height: 28px; margin: auto; }
+.calibration-line span { position: absolute; top: 50%; right: 0; left: 0; height: 1px; background: #111; }
+.calibration-line::before, .calibration-line::after { position: absolute; top: 0; width: 1px; height: 100%; background: #111; content: ""; transform: translateX(-50%); }
+.calibration-line::before { left: 0; }
+.calibration-line::after { left: 100%; }
+.calibration-input { display: grid; gap: 8px; font-weight: 700; }
+.calibration-input input { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; border: 1px solid #b8c1d1; border-radius: 5px; font: inherit; }
+.calibration-error { color: #a83d30; }
+.calibration-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+.calibration-actions button[type="submit"] { color: #fff; background: #21436f; }
+
 .task-message {
   position: absolute;
   z-index: 6;

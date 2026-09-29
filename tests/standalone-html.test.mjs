@@ -18,7 +18,7 @@ test("standalone HTML has no runtime dependencies and valid script syntax", asyn
 
 test("standalone HTML calculates physical A and W and supports fullscreen reset", async () => {
   const html = await readFile(htmlUrl, "utf8");
-  assert.match(html, /const mmPerPx = 25\.4 \/ ppi/);
+  assert.match(html, /const mmPerPx = calibratedScale \?\? 25\.4 \/ estimatedPpi/);
   assert.match(html, /amplitudeMm: config\.amplitude \* mmPerPx/);
   assert.match(html, /widthMm: config\.width \* mmPerPx/);
   assert.match(html, /requestFullscreen/);

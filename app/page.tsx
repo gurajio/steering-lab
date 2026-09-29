@@ -30,6 +30,18 @@ type ExperimentConfig = {
   calibration: Calibration | null;
 };
 
+type PresetId = "C1" | "C2" | "C3" | "C4";
+
+type PresetConfig = {
+  id: PresetId;
+  label: string;
+  amplitudePx: number;
+  widthPx: number;
+  angleDeg: number;
+  startBufferPx: number;
+  endBufferPx: number;
+};
+
 type TaskStatus =
   | "ready"
   | "tracking"
@@ -100,12 +112,14 @@ type TrackingTrial = {
   trajectory: TrailPoint[];
 };
 
-const PRESETS = [
-  { id: "C1", label: "A固定・W広い", amplitudePx: 1050, widthPx: 30 },
-  { id: "C2", label: "A固定・W狭い", amplitudePx: 1050, widthPx: 21 },
-  { id: "C3", label: "W固定・A長い", amplitudePx: 1250, widthPx: 25 },
-  { id: "C4", label: "W固定・A短い", amplitudePx: 875, widthPx: 25 },
-] as const;
+const DEFAULT_PRESETS: PresetConfig[] = [
+  { id: "C1", label: "A固定・W広い", amplitudePx: 1050, widthPx: 30, angleDeg: 30, startBufferPx: 200, endBufferPx: 200 },
+  { id: "C2", label: "A固定・W狭い", amplitudePx: 1050, widthPx: 21, angleDeg: 30, startBufferPx: 200, endBufferPx: 200 },
+  { id: "C3", label: "W固定・A長い", amplitudePx: 1250, widthPx: 25, angleDeg: 30, startBufferPx: 200, endBufferPx: 200 },
+  { id: "C4", label: "W固定・A短い", amplitudePx: 875, widthPx: 25, angleDeg: 30, startBufferPx: 200, endBufferPx: 200 },
+];
+
+const PRESET_CONFIG_KEYS = ["amplitudePx", "widthPx", "angleDeg", "startBufferPx", "endBufferPx"] as const;
 
 const DEFAULT_CONFIG: ExperimentConfig = {
   amplitudePx: 1050,
@@ -127,6 +141,7 @@ const DISPLAY = Object.freeze({
 });
 
 const STORAGE_KEY = "straight-steering-studio-config-v2";
+const PRESET_STORAGE_KEY = "straight-steering-studio-presets-v1";
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -135,6 +150,28 @@ function clamp(value: number, min: number, max: number) {
 function round(value: number, digits = 2) {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
+}
+
+function readSavedPresets(value: string | null) {
+  if (!value) return { presets: DEFAULT_PRESETS, activePresetId: "C1" as PresetId };
+  const saved = JSON.parse(value) as { presets?: Partial<PresetConfig>[]; activePresetId?: PresetId };
+  const nextPresets = DEFAULT_PRESETS.map((fallback) => {
+    const candidate = saved.presets?.find((preset) => preset.id === fallback.id);
+    if (!candidate) return fallback;
+    return {
+      ...fallback,
+      ...candidate,
+      id: fallback.id,
+      label: typeof candidate.label === "string" ? candidate.label : fallback.label,
+      amplitudePx: Number.isFinite(candidate.amplitudePx) ? Number(candidate.amplitudePx) : fallback.amplitudePx,
+      widthPx: Number.isFinite(candidate.widthPx) ? Number(candidate.widthPx) : fallback.widthPx,
+      angleDeg: Number.isFinite(candidate.angleDeg) ? Number(candidate.angleDeg) : fallback.angleDeg,
+      startBufferPx: Number.isFinite(candidate.startBufferPx) ? Number(candidate.startBufferPx) : fallback.startBufferPx,
+      endBufferPx: Number.isFinite(candidate.endBufferPx) ? Number(candidate.endBufferPx) : fallback.endBufferPx,
+    };
+  });
+  const activePresetId = DEFAULT_PRESETS.some((preset) => preset.id === saved.activePresetId) ? saved.activePresetId! : "C1";
+  return { presets: nextPresets, activePresetId };
 }
 
 function readEnvironment(): DisplayEnvironment {
@@ -738,12 +775,42 @@ function NumberField({ id, label, value, unit, min, max, step = 1, onChange }: {
   );
 }
 
+function PresetPreview({ preset, active, onSelect }: { preset: PresetConfig; active: boolean; onSelect: () => void }) {
+  const angle = (preset.angleDeg * Math.PI) / 180;
+  const halfLength = 82;
+  const x = Math.cos(angle) * halfLength;
+  const y = Math.sin(angle) * halfLength;
+  const previewWidth = clamp(preset.widthPx / 4, 3, 16);
+
+  return (
+    <button type="button" className={active ? "preset-preview-card is-active" : "preset-preview-card"} onClick={onSelect}>
+      <span className="preset-preview-head"><strong>{preset.id}</strong><small>{preset.label}</small></span>
+      <svg viewBox="0 0 200 116" role="img" aria-label={`${preset.id}の経路プレビュー`}>
+        <line x1={100 - x} y1={58 + y} x2={100 + x} y2={58 - y} stroke="#dce8fb" strokeWidth={previewWidth + 8} strokeLinecap="round" />
+        <line x1={100 - x} y1={58 + y} x2={100 + x} y2={58 - y} stroke="#1f6feb" strokeWidth={previewWidth} strokeLinecap="round" />
+        <circle cx={100 - x} cy={58 + y} r={previewWidth / 2 + 5} fill="#16794c" />
+        <circle cx={100 + x} cy={58 - y} r={previewWidth / 2 + 5} fill="#d56b30" />
+      </svg>
+      <span className="preset-preview-values">
+        <b>A {preset.amplitudePx}px</b>
+        <b>W {preset.widthPx}px</b>
+        <b>ID {round(preset.amplitudePx / Math.max(preset.widthPx, 0.1), 3)}</b>
+        <b>{preset.angleDeg}°</b>
+      </span>
+    </button>
+  );
+}
+
 export default function Home() {
   const [config, setConfig] = useState<ExperimentConfig>(DEFAULT_CONFIG);
+  const [presets, setPresets] = useState<PresetConfig[]>(DEFAULT_PRESETS);
+  const [activePresetId, setActivePresetId] = useState<PresetId>("C1");
+  const [presetsLoaded, setPresetsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<"task" | "screen" | "measure">("task");
   const [fullscreen, setFullscreen] = useState(false);
   const [drawerPinned, setDrawerPinned] = useState(false);
   const [drawerDismissed, setDrawerDismissed] = useState(false);
+  const [presetPreviewOpen, setPresetPreviewOpen] = useState(false);
   const [parameterTab, setParameterTab] = useState<"task" | "buffer" | "screen">("task");
   const [taskStatus, setTaskStatus] = useState<TaskStatus>("ready");
   const [lastResult, setLastResult] = useState<TrialResult | null>(null);
@@ -812,6 +879,30 @@ export default function Home() {
   }, [config]);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = readSavedPresets(window.localStorage.getItem(PRESET_STORAGE_KEY));
+        setPresets(saved.presets);
+        setActivePresetId(saved.activePresetId);
+      } catch {
+        // Invalid or unavailable storage falls back to the original four conditions.
+      } finally {
+        setPresetsLoaded(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!presetsLoaded) return;
+    try {
+      window.localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify({ presets, activePresetId }));
+    } catch {
+      // The page remains usable without persistence.
+    }
+  }, [activePresetId, presets, presetsLoaded]);
+
+  useEffect(() => {
     const handleFullscreenChange = () => setFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
@@ -854,7 +945,28 @@ export default function Home() {
   const calibrationLabel = metrics.calibrated ? "実測校正済み" : config.calibration ? "要再校正：画面・倍率を確認してください（現在は推定値）" : "未校正：画面設定からの推定値";
 
   const updateConfig = useCallback((updates: Partial<ExperimentConfig>) => {
-    setConfig((current) => ({ ...current, ...updates }));
+    const next = { ...config, ...updates };
+    setConfig(next);
+    if (PRESET_CONFIG_KEYS.some((key) => key in updates)) {
+      setPresets((currentPresets) => currentPresets.map((preset) => preset.id === activePresetId
+        ? { ...preset, ...Object.fromEntries(PRESET_CONFIG_KEYS.map((key) => [key, next[key]])) }
+        : preset));
+    }
+    setLastResult(null);
+    setTaskStatus("changed");
+    setTrialResetKey((key) => key + 1);
+  }, [activePresetId, config]);
+
+  const selectPreset = useCallback((preset: PresetConfig) => {
+    setActivePresetId(preset.id);
+    setConfig((current) => ({
+      ...current,
+      amplitudePx: preset.amplitudePx,
+      widthPx: preset.widthPx,
+      angleDeg: preset.angleDeg,
+      startBufferPx: preset.startBufferPx,
+      endBufferPx: preset.endBufferPx,
+    }));
     setLastResult(null);
     setTaskStatus("changed");
     setTrialResetKey((key) => key + 1);
@@ -993,12 +1105,13 @@ export default function Home() {
             <section className="tab-panel">
               <div className="panel-title"><h2>課題設定</h2><p>A・W・直線角度を変更すると、右のプレビューへ即時反映されます。</p></div>
               <div className="control-card">
-                <h3>既存条件プリセット</h3>
+                <h3>保存条件プリセット</h3>
                 <div className="preset-row" aria-label="既存条件プリセット">
-                  {PRESETS.map((preset) => (
-                    <button key={preset.id} type="button" className={config.amplitudePx === preset.amplitudePx && config.widthPx === preset.widthPx ? "preset-button is-active" : "preset-button"} title={preset.label} onClick={() => updateConfig({ amplitudePx: preset.amplitudePx, widthPx: preset.widthPx })}>{preset.id}</button>
+                  {presets.map((preset) => (
+                    <button key={preset.id} type="button" className={activePresetId === preset.id ? "preset-button is-active" : "preset-button"} title={preset.label} onClick={() => selectPreset(preset)}>{preset.id}</button>
                   ))}
                 </div>
+                <p className="preset-save-note"><b>{activePresetId}</b>を編集中 · A・W・角度・バッファの変更はすぐに保存されます</p>
                 <div className="field-grid">
                   <NumberField id="amplitude" label="A · 移動距離" value={config.amplitudePx} unit="px" min={40} max={4000} onChange={(value) => setValue("amplitudePx", value)} />
                   <NumberField id="width" label="W · 通路幅" value={config.widthPx} unit="px" min={8} max={600} onChange={(value) => setValue("widthPx", value)} />
@@ -1075,11 +1188,29 @@ export default function Home() {
         <div className="task-toolbar">
           <div className="task-readout"><span>STRAIGHT TASK</span><b>A {config.amplitudePx}px</b><b>W {config.widthPx}px</b><b>ID {round(metrics.steeringId, 3)}</b><b>BUFFER {config.startBufferPx} / {config.endBufferPx}px</b><b>{round(metrics.amplitudeMm, 1)} × {round(metrics.widthMm, 1)} mm（{metrics.calibrated ? "校正済" : "推定"}）</b></div>
           <div className="task-actions">
+            <button type="button" className={presetPreviewOpen ? "is-active" : ""} aria-expanded={presetPreviewOpen} onClick={() => setPresetPreviewOpen((open) => !open)}>4条件プレビュー</button>
             {!fullscreen && <button type="button" onClick={enterTaskFullscreen}>ブラウザ全画面</button>}
             <button type="button" onClick={() => void leaveFullscreen()} disabled={!fullscreen}>全画面解除</button>
             <button className="task-stop" type="button" onClick={resetTrial}>試行をリセット</button>
           </div>
         </div>
+        {presetPreviewOpen && (
+          <section className="preset-overview" role="dialog" aria-modal="true" aria-labelledby="preset-overview-title">
+            <div className="preset-overview-head">
+              <div><p>CONDITION OVERVIEW</p><h2 id="preset-overview-title">C1〜C4 プレビュー</h2></div>
+              <button type="button" onClick={() => setPresetPreviewOpen(false)}>閉じる</button>
+            </div>
+            <p className="preset-overview-note">4条件のA・W・ID・角度を一覧表示しています。条件を選ぶと試行へ反映します。</p>
+            <div className="preset-preview-grid">
+              {presets.map((preset) => (
+                <PresetPreview key={`preview-${preset.id}`} preset={preset} active={activePresetId === preset.id} onSelect={() => {
+                  selectPreset(preset);
+                  setPresetPreviewOpen(false);
+                }} />
+              ))}
+            </div>
+          </section>
+        )}
         <div className="task-workspace">
           <div
             className={`task-parameter-dock${drawerPinned ? " is-open" : ""}${drawerDismissed ? " is-dismissed" : ""}`}
@@ -1109,10 +1240,11 @@ export default function Home() {
 
               {parameterTab === "task" && <div role="tabpanel" className="parameter-tab-panel">
                 <div className="preset-row" aria-label="既存条件プリセット">
-                  {PRESETS.map((preset) => (
-                    <button key={`run-${preset.id}`} type="button" className={config.amplitudePx === preset.amplitudePx && config.widthPx === preset.widthPx ? "preset-button is-active" : "preset-button"} title={preset.label} onClick={() => updateConfig({ amplitudePx: preset.amplitudePx, widthPx: preset.widthPx })}>{preset.id}</button>
+                  {presets.map((preset) => (
+                    <button key={`run-${preset.id}`} type="button" className={activePresetId === preset.id ? "preset-button is-active" : "preset-button"} title={preset.label} onClick={() => selectPreset(preset)}>{preset.id}</button>
                   ))}
                 </div>
+                <p className="preset-save-note"><b>{activePresetId}</b>へ変更を自動保存</p>
                 <div className="control-card">
                   <h3>直線課題</h3>
                   <div className="field-grid">

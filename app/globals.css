@@ -185,6 +185,8 @@ input:focus-visible {
   font: 700 10px/1 var(--font-mono), monospace;
 }
 .preset-button:hover, .preset-button.is-active { border-color: var(--primary); color: var(--primary); background: #eef5ff; }
+.preset-save-note { margin: -3px 0 12px; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.preset-save-note b { color: var(--primary); font: 800 10px/1 var(--font-mono), monospace; }
 
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .number-field, .range-field { display: grid; gap: 7px; color: #4f5862; font-size: 10px; font-weight: 700; }
@@ -415,7 +417,48 @@ input:focus-visible {
 .task-readout span { color: var(--primary); white-space: nowrap; font: 800 9px/1 var(--font-mono), monospace; letter-spacing: .1em; }
 .task-readout b { padding-left: 11px; border-left: 1px solid var(--line); color: #263044; white-space: nowrap; font: 650 10px/1 var(--font-mono), monospace; }
 .task-actions button:disabled { opacity: .35; cursor: not-allowed; }
+.task-actions button.is-active { border-color: var(--primary); color: var(--primary); background: #eef5ff; }
 .task-actions .task-stop { border-color: var(--red); color: #fff; background: var(--red); }
+
+.preset-overview {
+  position: absolute;
+  z-index: 7;
+  top: 76px;
+  left: 50%;
+  width: min(880px, calc(100% - 48px));
+  max-height: calc(100% - 138px);
+  padding: 20px;
+  overflow: auto;
+  border: 1px solid #b9c6d8;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .98);
+  transform: translateX(-50%);
+  filter: drop-shadow(0 18px 36px rgba(23, 32, 51, .24));
+}
+.preset-overview-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.preset-overview-head p { margin: 0 0 4px; color: var(--primary); font: 800 9px/1 var(--font-mono), monospace; letter-spacing: .12em; }
+.preset-overview-head h2 { margin: 0; font-size: 18px; }
+.preset-overview-head button { min-height: 32px; padding: 0 12px; border: 1px solid #b8c1d1; border-radius: 6px; background: #fff; cursor: pointer; font-size: 10px; font-weight: 750; }
+.preset-overview-note { margin: 10px 0 15px; color: var(--muted); font-size: 10px; }
+.preset-preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.preset-preview-card {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #f9fbff;
+  cursor: pointer;
+  text-align: left;
+}
+.preset-preview-card:hover,
+.preset-preview-card.is-active { border-color: var(--primary); background: #eef5ff; box-shadow: inset 0 0 0 1px var(--primary); }
+.preset-preview-head { display: flex; align-items: baseline; gap: 9px; }
+.preset-preview-head strong { color: var(--primary); font: 850 15px/1 var(--font-mono), monospace; }
+.preset-preview-head small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
+.preset-preview-card svg { display: block; width: 100%; height: 116px; margin: 5px 0; border-radius: 6px; background: #fff; }
+.preset-preview-values { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.preset-preview-values b { padding: 6px 4px; border-radius: 4px; color: #33415a; background: #fff; text-align: center; white-space: nowrap; font: 700 9px/1 var(--font-mono), monospace; }
 
 .task-workspace { position: absolute; inset: 0; min-width: 0; min-height: 0; overflow: hidden; }
 .task-stage { position: absolute; inset: 0; min-width: 0; min-height: 0; overflow: auto; padding: 0; background: #d8dce3; }
@@ -597,6 +640,8 @@ input:focus-visible {
   .task-readout b:nth-of-type(n + 3) { display: none; }
   .task-actions { flex-direction: column; align-items: stretch; }
   .task-actions button { min-height: 30px; white-space: nowrap; }
+  .preset-overview { top: 92px; width: calc(100% - 24px); max-height: calc(100% - 164px); padding: 14px; }
+  .preset-preview-grid { grid-template-columns: 1fr; }
   .task-parameter-dock { width: 286px; grid-template-columns: 250px 36px; transform: translateX(-250px); }
   .task-parameter-dock:hover, .task-parameter-dock:focus-within, .task-parameter-dock.is-open { transform: translateX(0); }
   .task-parameter-dock.is-dismissed, .task-parameter-dock.is-dismissed:hover, .task-parameter-dock.is-dismissed:focus-within { transform: translateX(-250px); }
